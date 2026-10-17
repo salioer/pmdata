@@ -1,0 +1,1848 @@
+<title>研发数据体系方案</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* 布局：左侧章节目录轨 + 右侧阅读栏，像一本按章节装订、页边有索引签的账本 */
+:root{
+  --bg:#F5F7F6; --surface:#FFFFFF; --sunken:#EEF2F1; --ink:#14201E; --ink-2:#465452; --muted:#6B7976;
+  --line:#DCE3E0; --line-strong:#C3CDCA;
+  --accent:#0D6A63; --accent-ink:#0A5751; --accent-soft:#E2EFEC;
+  --good:#0ca30c; --good-ink:#006300; --good-soft:#E3F3E3;
+  --warn:#fab219; --warn-ink:#875A00; --warn-soft:#FDF1D6;
+  --crit:#d03b3b; --crit-ink:#A82828; --crit-soft:#F9E3E3;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --ref:#B9C3C0; --on-mark:#FFFFFF;
+  --f-display:"Noto Serif SC","Songti SC","STSong","SimSun",serif;
+  --f-body:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1413; --surface:#151D1B; --sunken:#1B2422; --ink:#E5ECEA; --ink-2:#B2BEBB; --muted:#8B9895;
+  --line:#25302E; --line-strong:#34413E;
+  --accent:#4DB6AC; --accent-ink:#7FCFC6; --accent-soft:#16302C;
+  --good-ink:#3DC93D; --good-soft:#132A16; --warn-ink:#FAB219; --warn-soft:#2E2510; --crit-ink:#E66767; --crit-soft:#331818;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ref:#4A5653; --on-mark:#FFFFFF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1413; --surface:#151D1B; --sunken:#1B2422; --ink:#E5ECEA; --ink-2:#B2BEBB; --muted:#8B9895;
+  --line:#25302E; --line-strong:#34413E;
+  --accent:#4DB6AC; --accent-ink:#7FCFC6; --accent-soft:#16302C;
+  --good-ink:#3DC93D; --good-soft:#132A16; --warn-ink:#FAB219; --warn-soft:#2E2510; --crit-ink:#E66767; --crit-soft:#331818;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --ref:#4A5653; --on-mark:#FFFFFF; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+table{font:inherit;color:inherit}
+a{color:var(--accent-ink);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+h1,h2,h3,h4{text-wrap:balance;margin:0;line-height:1.35}
+p{margin:0}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+.shell{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.shell>*,.part>*,.sec>*,.grid>*,.domain>*,.checks>*,.viz>*,.callout>*,.hero>*,.weeks>*,.times>*{min-width:0}
+@media (min-width:1080px){.shell{grid-template-columns:220px minmax(0,1fr);gap:48px}}
+.toc{min-width:0}
+
+/* 目录 */
+.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
+  margin-left:calc(-1*max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1*max(16px,env(safe-area-inset-right,0px)));
+  padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.toc ol{list-style:none;margin:0;padding:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.toc ol::-webkit-scrollbar{display:none}
+.toc a{display:flex;gap:8px;align-items:baseline;white-space:nowrap;text-decoration:none;color:var(--ink-2);font-size:13px;padding:5px 10px;border-radius:6px}
+.toc a .n{font-family:var(--f-display);color:var(--muted);font-size:12px}
+.toc a:hover{background:var(--sunken);color:var(--ink)}
+.toc a[aria-current="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+.toc a[aria-current="true"] .n{color:var(--accent-ink)}
+.toc .brand{display:none}
+@media (min-width:1080px){
+  .toc{margin:0;padding:40px 0 24px;border:0;height:100vh;overflow-y:auto;top:0}
+  .toc .brand{display:block;font-family:var(--f-display);font-size:15px;line-height:1.5;color:var(--ink);padding:0 10px 16px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .toc .brand small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);margin-top:4px}
+  .toc ol{flex-direction:column;gap:2px;overflow:visible}
+  .toc a{font-size:14px;padding:6px 10px}
+  .toc a .n{width:28px;flex:none}
+}
+
+.main{min-width:0;padding-top:24px}
+@media (min-width:1080px){.main{padding-top:40px}}
+
+/* 封面 */
+.hero{padding-block:8px 32px;border-bottom:1px solid var(--line);display:grid;gap:18px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent-ink);font-weight:500}
+.hero h1{font-family:var(--f-display);font-size:clamp(28px,4.2vw,42px);font-weight:700;letter-spacing:.01em}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--ink-2)}
+.meta span b{color:var(--muted);font-weight:400;margin-right:6px}
+.thesis{font-family:var(--f-display);font-size:clamp(18px,2.4vw,22px);line-height:1.6;max-width:36em;color:var(--ink);border-left:3px solid var(--accent);padding-left:16px}
+.howto{font-size:13px;color:var(--muted);max-width:60em}
+
+/* 部分 */
+.part{padding-block:48px 8px;display:grid;gap:22px}
+.part-head{display:grid;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.part-no{font-family:var(--f-display);font-size:13px;color:var(--accent-ink);letter-spacing:.08em}
+.part-head h2{font-family:var(--f-display);font-size:clamp(23px,3vw,30px);font-weight:700}
+.part-head p{color:var(--ink-2);max-width:46em}
+.sec{display:grid;gap:14px;padding-top:10px}
+.sec>h3{font-size:18px;font-weight:700;display:flex;gap:10px;align-items:baseline}
+.sec>h3 .sn{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-weight:400}
+h4{font-size:15px;font-weight:700}
+.lead{max-width:46em;color:var(--ink-2)}
+.prose{max-width:46em;display:grid;gap:8px}
+.note{font-size:13px;color:var(--muted);max-width:52em}
+ul.dots,ol.nums{margin:0;padding-left:1.3em;display:grid;gap:6px;max-width:48em}
+ol.nums li::marker{color:var(--accent-ink);font-family:var(--f-mono);font-size:.9em}
+
+/* 通用块 */
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.g5{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:8px;align-content:start;min-width:0}
+.card h4{font-size:15px}
+.card p{color:var(--ink-2);font-size:14px}
+.kicker{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.callout{background:var(--accent-soft);border-radius:10px;padding:16px 18px;display:grid;gap:6px}
+.callout strong{color:var(--accent-ink)}
+.formula{background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:18px 20px;display:grid;gap:10px;overflow-x:auto}
+.formula .eq{font-family:var(--f-display);font-size:clamp(17px,2.4vw,22px);font-weight:600;white-space:nowrap}
+.formula .eq em{font-style:normal;color:var(--accent-ink)}
+.formula .sub{font-size:13px;color:var(--muted)}
+pre.block{margin:0;background:var(--sunken);border-radius:8px;padding:14px 16px;font-family:var(--f-mono);font-size:13px;line-height:1.7;overflow-x:auto;color:var(--ink)}
+
+/* 表格 */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px}
+.tbl th,.tbl td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-weight:500;color:var(--muted);font-size:12.5px;background:var(--sunken);white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.num,.tbl th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl tr.grp td{background:var(--sunken);font-weight:700;font-size:13px;color:var(--ink-2)}
+.tbl tr.tot td{font-weight:700}
+.tbl .nowrap{white-space:nowrap}
+
+/* 标签 */
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;line-height:1;padding:4px 8px;border-radius:999px;white-space:nowrap;font-weight:500}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.rd-c{background:var(--good-soft);color:var(--good-ink)}
+.rd-b{background:var(--warn-soft);color:var(--warn-ink)}
+.rd-n{background:var(--sunken);color:var(--muted)}
+.p0{background:var(--crit-soft);color:var(--crit-ink)}
+.chip{display:inline-block;font-family:var(--f-mono);font-size:12px;padding:1px 6px;border-radius:5px;background:var(--sunken);color:var(--ink-2);white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.star{color:var(--accent-ink);font-weight:700}
+.tag{font-size:11.5px;color:var(--muted);border:1px solid var(--line-strong);border-radius:5px;padding:0 6px;white-space:nowrap}
+.lv{display:inline-flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap}
+.lv i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.lv.g i{background:var(--good)} .lv.y i{background:var(--warn)} .lv.r i{background:var(--crit)}
+
+/* 总述：五问 */
+.q5{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:6px;align-content:start}
+.q .ask{font-size:13px;color:var(--muted)}
+.q .metric{font-family:var(--f-display);font-size:21px;font-weight:700;line-height:1.3}
+.q .why{font-size:13.5px;color:var(--ink-2)}
+.q.guard{background:transparent;border-style:dashed}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.flow a{display:grid;gap:2px;text-decoration:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--ink);min-width:0}
+.flow a:hover{border-color:var(--accent)}
+.flow a small{font-size:11.5px;color:var(--muted)}
+.flow a b{font-size:14px;font-weight:500}
+.flow .arr{color:var(--line-strong);font-size:14px}
+.flow .cap{background:var(--accent-soft);border-color:transparent}
+
+/* 路线 */
+.road{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));counter-reset:ph}
+.ph{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px 14px;display:grid;gap:6px;align-content:start}
+.ph .pn{font-family:var(--f-mono);font-size:12px;color:var(--accent-ink)}
+.ph h4{font-size:15px}
+.ph .dur{font-size:12px;color:var(--muted)}
+.ph p{font-size:13.5px;color:var(--ink-2)}
+.ph .out{font-size:13px;color:var(--ink);border-top:1px dashed var(--line-strong);padding-top:6px}
+
+/* 工时守恒 */
+.weeks{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.week{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:10px}
+.days{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.day{height:44px;border-radius:5px;display:grid;place-items:center;font-size:12px;color:var(--on-mark);font-weight:500}
+.d1{background:var(--s1)} .d2{background:var(--s2)} .d3{background:var(--s3)} .d4{background:var(--accent)}
+.daylab{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;font-size:11px;color:var(--muted);text-align:center}
+.week .res{font-size:13.5px;color:var(--ink-2)}
+.week .res b{color:var(--ink)}
+
+/* 资产 */
+.assets{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.asset{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;align-content:start}
+.asset h4{display:flex;gap:8px;align-items:center;font-size:14px}
+.asset h4 i{width:10px;height:10px;border-radius:50%}
+.asset p{font-size:13px;color:var(--ink-2)}
+.asset .use{font-size:12.5px;color:var(--muted)}
+
+/* 坐标轴 */
+.axes{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.axis{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:6px}
+.axis .ax{font-family:var(--f-display);font-size:20px;font-weight:700}
+.axis .vals{display:flex;flex-wrap:wrap;gap:6px}
+.axis .vals span{font-size:12.5px;background:var(--sunken);border-radius:5px;padding:2px 8px;color:var(--ink-2)}
+.axis p{font-size:13px;color:var(--ink-2)}
+.times{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+
+/* 定档刻度 */
+.scale{display:grid;gap:6px}
+.scale .bar{display:grid;grid-template-columns:3fr 7fr 20fr 22fr;gap:2px;border-radius:6px;overflow:hidden}
+.scale .seg{padding:10px 10px;background:var(--accent-soft);display:grid;gap:2px;min-width:0}
+.scale .seg:nth-child(2){background:color-mix(in srgb,var(--accent) 22%,var(--surface))}
+.scale .seg:nth-child(3){background:color-mix(in srgb,var(--accent) 38%,var(--surface))}
+.scale .seg:nth-child(4){background:color-mix(in srgb,var(--accent) 56%,var(--surface))}
+.scale .seg b{font-size:15px;color:var(--ink)}
+.scale .seg span{font-size:12px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scale .axisl{display:grid;grid-template-columns:3fr 7fr 20fr 22fr;gap:2px;font-size:11.5px;color:var(--muted)}
+
+/* 纠偏决策 */
+.decide{display:grid;gap:10px}
+.dstart{background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:12px 16px;font-weight:500;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.dstart small{color:var(--muted);font-weight:400}
+.branches{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))}
+.br{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;align-content:start;border-top:3px solid var(--line-strong)}
+.br.up{border-top-color:var(--good)} .br.down{border-top-color:var(--warn)}
+.br .cond{font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+.br h4{font-size:15px}
+.br p{font-size:13.5px;color:var(--ink-2)}
+.br .who{font-size:12px;color:var(--muted)}
+.res-up{color:var(--good-ink);font-weight:700}
+.res-keep{color:var(--ink);font-weight:700}
+.steps{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));counter-reset:st}
+.step{border-top:2px solid var(--accent);padding-top:8px;display:grid;gap:3px}
+.step .when{font-size:12.5px;color:var(--accent-ink);font-weight:500}
+.step p{font-size:13.5px;color:var(--ink-2)}
+
+/* 指标结构 */
+.ns{background:var(--accent-soft);border-radius:10px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline}
+.ns b{font-family:var(--f-display);font-size:19px}
+.ns span{font-size:13px;color:var(--ink-2)}
+.doms{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}
+.dom{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 12px;display:grid;gap:6px;align-content:start}
+.dom h4{font-size:14px;padding:0 4px 4px;border-bottom:1px solid var(--line)}
+.ind{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center;padding:5px 4px;border-radius:6px}
+.ind .id{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.ind .nm{font-size:13.5px;line-height:1.4}
+.ind .rd{grid-column:2}
+.ind.st .nm::after{content:" ★";color:var(--accent-ink)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--ink-2);align-items:center}
+.cards4{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.icard{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;align-content:start}
+.icard .ih{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.icard .ih .id{font-family:var(--f-mono);font-size:12px;color:var(--accent-ink)}
+.icard .ih b{font-size:15px}
+.icard code{display:block;background:var(--sunken);border-radius:6px;padding:6px 8px;font-size:12.5px;white-space:normal;color:var(--ink)}
+.icard p{font-size:13px;color:var(--ink-2)}
+
+/* 图表 */
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:14px}
+.viz-title{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.viz-title h4{font-size:15px}
+.viz-title span{font-size:12.5px;color:var(--muted)}
+.key{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.gbar{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:end;height:220px;border-bottom:1px solid var(--line-strong);padding:0 4px;position:relative}
+.gbar .grp{display:grid;grid-template-columns:1fr 1fr;gap:2px;align-items:end;height:100%}
+.gbar .b{border-radius:4px 4px 0 0;position:relative;min-height:2px;cursor:default}
+.gbar .b.base{background:var(--ref)}
+.gbar .b.cur{background:var(--s1)}
+.gbar .b span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:12px;color:var(--ink-2);padding-bottom:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.gbar .ref100{position:absolute;left:0;right:0;border-top:1px dashed var(--line-strong);pointer-events:none}
+.gbar .ref100 em{position:absolute;right:0;top:-18px;font-size:11px;color:var(--muted);font-style:normal}
+.gx{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:12.5px;color:var(--ink-2);text-align:center;padding:0 4px}
+.gx small{display:block;color:var(--muted);font-size:11.5px}
+
+.seg-tabs{display:inline-flex;background:var(--sunken);border-radius:8px;padding:3px;gap:2px}
+.seg-tabs button{font:inherit;font-size:13px;border:0;background:transparent;color:var(--ink-2);padding:5px 12px;border-radius:6px;cursor:pointer}
+.seg-tabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.hbars{display:grid;gap:12px}
+.hrow{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr);gap:12px;align-items:center}
+.hrow .lab{font-size:13px;color:var(--ink-2);line-height:1.4}
+.hrow .lab b{display:block;color:var(--ink);font-size:14px}
+.track{display:flex;gap:2px;height:34px}
+.track .s{height:100%;border-radius:0;display:grid;place-items:center;font-size:12.5px;font-weight:500;color:var(--on-mark);min-width:2px;cursor:default;font-variant-numeric:tabular-nums}
+.track .s:first-child{border-radius:4px 0 0 4px}
+.track .s:last-child{border-radius:0 4px 4px 0}
+.track .s:only-child{border-radius:4px}
+.s.c1{background:var(--s1)} .s.c2{background:var(--s2)} .s.c3{background:var(--s3)} .s.cr{background:var(--ref);color:var(--ink)}
+.hint{font-size:13.5px;color:var(--ink);background:var(--sunken);border-radius:8px;padding:10px 12px}
+.hint b{color:var(--accent-ink)}
+.stock{font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2);overflow-x:auto;white-space:nowrap}
+.prog{display:flex;align-items:center;gap:8px;min-width:150px}
+.prog .t{flex:1;height:8px;background:var(--sunken);border-radius:4px;overflow:hidden}
+.prog .t i{display:block;height:100%;background:var(--s1);border-radius:4px}
+.prog span{font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px}
+.tile .tl{font-size:12.5px;color:var(--muted)}
+.tile .tv{font-family:var(--f-display);font-size:24px;font-weight:700;line-height:1.2}
+.tile .ts{font-size:12px;color:var(--ink-2)}
+.sample{font-size:11.5px;color:var(--muted);border:1px dashed var(--line-strong);border-radius:5px;padding:1px 6px;justify-self:start}
+
+/* 校验 */
+.vdoms{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+.vdom{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 14px;display:grid;gap:8px;align-content:start}
+.vdom .vn{font-family:var(--f-display);font-size:22px;color:var(--accent-ink);line-height:1}
+.vdom h4{font-size:15px}
+.vdom .vq{font-size:12.5px;color:var(--muted)}
+.vdom ul{list-style:none;margin:0;padding:0;display:grid;gap:3px;font-size:13px}
+.vdom ul li span{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-right:6px}
+.vdom .for{font-size:12.5px;color:var(--ink-2);border-top:1px dashed var(--line-strong);padding-top:6px}
+.domain{display:grid;gap:12px;padding-top:6px}
+.domain>h4{font-size:16px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.domain>h4 small{font-weight:400;font-size:13px;color:var(--muted)}
+.checks{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.check{background:var(--surface);border:1px solid var(--line);border-radius:10px;display:grid;align-content:start;overflow:hidden;min-width:0}
+.check .ch{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;padding:12px 14px 10px}
+.check .ch .cid{font-family:var(--f-mono);font-size:13px;color:var(--accent-ink);font-weight:500}
+.check .ch b{font-size:15px}
+.check table{border-collapse:collapse;width:100%;font-size:13px}
+.check th,.check td{padding:6px 10px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+.check th{font-weight:500;font-size:12px;color:var(--muted);background:var(--sunken)}
+.check td.t{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.check .tw{overflow-x:auto}
+.check .for{padding:10px 14px 12px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.check .for .chip{background:var(--accent-soft);color:var(--accent-ink);font-family:var(--f-body)}
+.check .cn{padding:0 14px 12px;font-size:12.5px;color:var(--muted)}
+
+/* 矩阵 */
+.mx table{border-collapse:separate;border-spacing:0;font-size:13px;min-width:820px;width:100%}
+.mx th,.mx td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:center}
+.mx th{background:var(--sunken);font-weight:500;font-size:12px;color:var(--muted)}
+.mx thead tr:first-child th{font-size:12px;color:var(--ink-2);border-bottom:1px solid var(--line-strong)}
+.mx th.rh,.mx td.rh{text-align:left;position:sticky;left:0;background:var(--surface);white-space:nowrap;z-index:1;padding-left:12px}
+.mx thead th.rh{background:var(--sunken)}
+.mx td.dsep,.mx th.dsep{border-left:1px solid var(--line-strong)}
+.mx .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--accent);vertical-align:middle}
+.mx .ring{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--accent);vertical-align:middle}
+.mx tbody tr:hover td{background:var(--accent-soft)}
+.mx td.colhi,.mx th.colhi{background:var(--accent-soft)}
+.mx tbody tr.sum td{border-top:1px solid var(--line-strong)}
+
+/* 判定流程 */
+.dtree{display:grid;gap:8px;max-width:640px}
+.dtree .node{background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:10px 14px;font-size:14px}
+.dtree .kids{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));padding-left:18px;border-left:2px solid var(--line-strong);margin-left:14px}
+.dtree .kid{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13.5px;display:grid;gap:4px}
+.dtree .kid b{font-size:13px;color:var(--muted);font-weight:500}
+.pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13.5px}
+.pipe span{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+.pipe i{color:var(--muted);font-style:normal}
+
+.quad{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;max-width:720px;font-size:13.5px}
+.quad .qh{font-size:12px;color:var(--muted);display:grid;place-items:center;padding:4px;text-align:center}
+.quad .qc{border-radius:8px;padding:12px 14px;display:grid;gap:4px;background:var(--surface);border:1px solid var(--line)}
+.quad .qc b{font-size:14px}
+.quad .qc span{color:var(--ink-2);font-size:13px}
+.quad .keep{background:var(--good-soft);border-color:transparent}
+.quad .drop{background:var(--sunken);border-color:transparent}
+
+.layers{display:grid;gap:8px}
+.layer{display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.layer .ln{font-family:var(--f-display);font-weight:700;font-size:16px}
+.layer .ln small{display:block;font-family:var(--f-body);font-weight:400;font-size:12px;color:var(--muted)}
+.layer p{font-size:13.5px;color:var(--ink-2)}
+@media (max-width:560px){.layer{grid-template-columns:1fr}}
+
+.three{display:grid;gap:10px}
+.three .s3{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+.three .s3 .k{font-family:var(--f-display);font-size:24px;color:var(--accent-ink);line-height:1.2}
+.three .s3 p{font-size:15px}
+.three .s3 p b{color:var(--ink)}
+
+dl.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0 24px;margin:0}
+dl.gloss div{padding:8px 0;border-bottom:1px solid var(--line);display:grid;gap:2px}
+dl.gloss dt{font-weight:700;font-size:14px}
+dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
+
+.foot{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px}
+
+.tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12.5px;line-height:1.5;padding:6px 10px;border-radius:6px;max-width:260px}
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="章节目录">
+    <div class="brand">研发数据体系方案<small>v1.1 · 2026-10-17</small></div>
+    <ol>
+      <li><a href="#overview"><span class="n">总</span>总述</a></li>
+      <li><a href="#p1"><span class="n">一</span>设计前提</a></li>
+      <li><a href="#p2"><span class="n">二</span>统一口径</a></li>
+      <li><a href="#p3"><span class="n">三</span>规模定档</a></li>
+      <li><a href="#p4"><span class="n">四</span>指标体系</a></li>
+      <li><a href="#p5"><span class="n">五</span>衡量方法</a></li>
+      <li><a href="#p6"><span class="n">六</span>数据保障</a></li>
+      <li><a href="#p7"><span class="n">七</span>展示与运营</a></li>
+      <li><a href="#p8"><span class="n">八</span>落地路线</a></li>
+      <li><a href="#p9"><span class="n">九</span>待讨论议题</a></li>
+      <li><a href="#summary"><span class="n">总</span>总结</a></li>
+      <li><a href="#appendix"><span class="n">附</span>附录</a></li>
+    </ol>
+  </nav>
+
+  <main class="main">
+    <header class="hero">
+      <div class="eyebrow">CIO 团队 · 消金 / 信贷 / 支付 / 保险</div>
+      <h1>研发数据体系建设与治理方案</h1>
+      <div class="meta">
+        <span><b>读者</b>所有人</span>
+        <span><b>版本</b>v1.1（2026-10-17）</span>
+        <span><b>状态</b>待评审；第九部分为待讨论议题</span>
+      </div>
+      <p class="thesis">AI 的提效不体现在"总工时变少"，而体现在"同一份工时喂饱了更多需求"。</p>
+      <p class="howto">怎么读：先读"总述"，五分钟了解全貌；再按需读第一至第九部分；最后的"总结"把五个问题的答案收拢到一张表里。</p>
+    </header>
+
+    <!-- ============ 总述 ============ -->
+    <section class="part" id="overview">
+      <div class="part-head">
+        <div class="part-no">总述</div>
+        <h2>一页看懂</h2>
+      </div>
+
+      <div class="sec">
+        <h3>为什么要建</h3>
+        <p class="lead">公司正在做 AI 转型，AI 研发模式正在替代部分数马人力。PM 团队要同时做两件事：</p>
+        <div class="grid g2">
+          <div class="card"><div class="kicker">第一件事</div><h4>建一本可审计的账</h4><p>讲清楚研发效率怎么样、AI 顶了多少、人有没有被喂饱、数据能不能信、AI 的效率如何。</p></div>
+          <div class="card"><div class="kicker">第二件事</div><h4>治理已经腐化的存量数据</h4><p>工时不准、定档不准、需求数不准、antom 同步漏单、两边系统状态冲突。</p></div>
+        </div>
+        <p class="lead">两件事必须一起做：数据不治理，账算不准；没有账，治理没有目标。</p>
+      </div>
+
+      <div class="sec">
+        <h3>五个问题，五个数</h3>
+        <div class="q5">
+          <div class="q"><div class="ask">效率怎么样</div><div class="metric">效率指数</div><div class="why">同样的人日交付了多少活，AI 推广前 = 1.00</div></div>
+          <div class="q"><div class="ask">AI 顶了多少</div><div class="metric">等效人力</div><div class="why">比 AI 推广前多交付的活，折合多少个人</div></div>
+          <div class="q"><div class="ask">人有没有被喂饱</div><div class="metric">人均吞吐当量</div><div class="why">每人每月交付多少当量</div></div>
+          <div class="q"><div class="ask">数据能不能信</div><div class="metric">数据校验达标率</div><div class="why">五个域、15 项校验的达标情况</div></div>
+          <div class="q"><div class="ask">AI 的效率如何</div><div class="metric">¥ / 当量</div><div class="why">每交付一个当量花了多少 AI 费用</div></div>
+          <div class="q guard"><div class="ask">质量护栏</div><div class="metric">上线后 30 天缺陷数 / 当量</div><div class="why">防止"提速降质"</div></div>
+        </div>
+        <p class="note">所有数字都能按 战场 × 规模档（XS / S / M / L）× 时间（周 / 月）下钻；不能下钻到战场的指标不进总览。</p>
+      </div>
+
+      <div class="sec">
+        <h3>北极星指标</h3>
+        <div class="formula">
+          <div class="eq"><em>效率指数</em> = Σ 上线需求当量 ÷ Σ 名册可用人日</div>
+          <div class="sub">按战场，滚动 3 个月，AI 推广前 6 个月的基线期 = 1.00</div>
+        </div>
+        <div class="grid g2">
+          <div class="card"><h4>需求当量</h4><p>一个需求"值多少活"，由它的规模档决定，单位是"按 AI 之前的平均效率需要多少人日"。</p></div>
+          <div class="card"><h4>名册可用人日</h4><p>在册人数 × 工作日，来自 HR / PMO 名册。</p></div>
+        </div>
+        <p class="lead">一个人一周最多填 5 天，工时总量近似守恒。所以 AI 的提效不会体现为"总工时变少"，而是体现为同一份工时喂饱了更多需求。效率指数衡量的正是这一点。</p>
+      </div>
+
+      <div class="sec">
+        <h3>四个关键设计</h3>
+        <div class="grid g2">
+          <div class="card"><div class="kicker">解决：工时分到哪个需求上不准</div><h4>分母用名册</h4><p>北极星只用名册可用人日，工时明细只作诊断。</p></div>
+          <div class="card"><div class="kicker">解决：规模档不准；人日随 AI 下降导致"掉档"</div><h4>预估工作量定档 + 每月纠偏</h4><p>用 TL 排期时的评估人日定档并冻结；上线后每月纠偏，<b>只按实际上调，不按实际下调</b>。</p></div>
+          <div class="card"><div class="kicker">解决：月初排期与按月发布对不上</div><h4>双口径 + 桥接表</h4><p>承诺口径（按排期月）和产出口径（按上线月）并存，每月一张桥接表拆清差额。</p></div>
+          <div class="card"><div class="kicker">解决：校验规则散、数据不可信</div><h4>五域校验 + 数据门禁</h4><p>按人力与工时、需求、规模档、时间、AI 五个域收拢成 15 项校验，每项标明保障哪些指标；校验不过只出底数，不出结论。</p></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>全文结构</h3>
+        <div class="flow" aria-label="全文结构">
+          <a href="#p1"><small>第一部分</small><b>设计前提</b></a><span class="arr">→</span>
+          <a href="#p2"><small>第二部分</small><b>统一口径</b></a><span class="arr">→</span>
+          <a href="#p3"><small>第三部分</small><b>规模定档</b></a><span class="arr">→</span>
+          <a href="#p4"><small>第四部分</small><b>指标体系</b></a><span class="arr">→</span>
+          <a href="#p5"><small>第五部分</small><b>衡量方法</b></a><span class="arr">→</span>
+          <a href="#p6"><small>第六部分</small><b>数据保障</b></a><span class="arr">→</span>
+          <a href="#p7"><small>第七部分</small><b>展示与运营</b></a><span class="arr">→</span>
+          <a href="#p8"><small>第八部分</small><b>落地路线</b></a><span class="arr">→</span>
+          <a href="#p9"><small>第九部分</small><b>待讨论议题</b></a><span class="arr">→</span>
+          <a href="#summary" class="cap"><small>收束</small><b>总结</b></a>
+        </div>
+        <p class="lead">前提决定口径；口径决定定档和指标；方法给出算法；保障让数可信；展示让人看懂；路线让方案落地。</p>
+      </div>
+
+      <div class="sec">
+        <h3>路线图一览</h3>
+        <div class="road">
+          <div class="ph"><div class="pn">P0</div><h4>摸底与止血</h4><div class="dur">2–4 周</div><p>跑 15 项校验底数；校准定档参数；antom 对账；iSmart 排期冻结快照</p><div class="out">数据质量基线、定档参数</div></div>
+          <div class="ph"><div class="pn">P1</div><h4>首版账本</h4><div class="dur">4–6 周</div><p>出效率指数 v1；每月纠偏首轮运行；桥接表；数据质量看板</p><div class="out">总览和战场页 v1</div></div>
+          <div class="ph"><div class="pn">P2</div><h4>稳定运行</h4><div class="dur">1–2 个季度</div><p>纠偏常态化；工时与里程碑治理；质量护栏上线</p><div class="out">人效、周期、护栏升到结论级</div></div>
+          <div class="ph"><div class="pn">P3</div><h4>AI 账本</h4><div class="dur">之后</div><p>Token 明细上线；采纳埋点；评估是否启动修改点定档</p><div class="out">AI 效能升到结论级</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 第一部分 ============ -->
+    <section class="part" id="p1">
+      <div class="part-head">
+        <div class="part-no">第一部分</div>
+        <h2>设计前提</h2>
+        <p>现状、底层原理、设计原则和红线，决定了后面每一个口径怎么定。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">1.1</span>现状</h3>
+        <ul class="dots">
+          <li>CIO 团队有四个战场：消金、信贷、支付、保险。其中 antom 战场使用自有项目管理系统，通过接口同步到 iSmart。</li>
+          <li>研发力量为正式员工 + 数马。外包本月裁撤完毕，今后只有这两类。</li>
+          <li>AI 研发模式正在替代部分数马人力，管理层需要一本说得清、经得起审计的账。</li>
+        </ul>
+        <h4>数据资产盘点</h4>
+        <div class="assets">
+          <div class="asset"><h4><i style="background:var(--good)"></i>易采集</h4><p>需求主档、里程碑（计划 + 实际）、三类人日（iSmart）；编制表、人数结构、裁撤记录（HR / PMO 月表）</p><div class="use">需经第六部分的校验</div></div>
+          <div class="asset"><h4><i style="background:var(--warn)"></i>需治理</h4><p>AI 工具遥测（会话、轮次、执行计划、代码行）；计划结构化字段</p><div class="use">覆盖不全，不达标只出底数</div></div>
+          <div class="asset"><h4><i style="background:var(--crit)"></i>谨慎采集</h4><p>工时明细（到人）、代码提交记录（到人）、AI 会话内容、编辑器行为数据</p><div class="use">最小必要、匿名聚合、不进 KPI</div></div>
+          <div class="asset"><h4><i style="background:var(--line-strong)"></i>未采集</h4><p>线上质量数据（P0）、Token 消耗明细（P1）、AI 产出采纳埋点（P1）、业务需求池等（P2）</p><div class="use">按优先级补建</div></div>
+        </div>
+        <h4>已知腐化点</h4>
+        <ol class="nums">
+          <li><b>工时不准</b>：有缺填、敷衍填报、挂错需求。</li>
+          <li><b>定档不准</b>：规模档依赖研发自填的人日。</li>
+          <li><b>需求数不准</b>：有漏同步、重复、拆单。</li>
+          <li><b>antom 同步漏单</b>：antom 里有的需求，iSmart 里没有。</li>
+          <li><b>状态冲突</b>：同一需求在 antom 是"未受理"，在 iSmart 是"已上线"。</li>
+        </ol>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">1.2</span>底层原理：工时守恒</h3>
+        <p class="lead"><b>一个人一周最多填 5 天。</b>无论 AI 用得多好，工时填报总量近似守恒：总报工人日 ≈ 在册人数 × 工作日。</p>
+        <div class="weeks">
+          <div class="week">
+            <h4>示意：AI 推广前，一个人的一周</h4>
+            <div class="days"><div class="day d1">需求甲</div><div class="day d1">需求甲</div><div class="day d1">需求甲</div><div class="day d2">需求乙</div><div class="day d2">需求乙</div></div>
+            <div class="daylab"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span></div>
+            <p class="res">填满 <b>5 天</b>，推进 <b>2 个</b>需求</p>
+          </div>
+          <div class="week">
+            <h4>示意：AI 推广后，同一个人的一周</h4>
+            <div class="days"><div class="day d1">需求甲</div><div class="day d1">需求甲</div><div class="day d2">需求乙</div><div class="day d3">需求丙</div><div class="day d4">需求丁</div></div>
+            <div class="daylab"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span></div>
+            <p class="res">还是填满 <b>5 天</b>，推进 <b>4 个</b>需求</p>
+          </div>
+        </div>
+        <ol class="nums">
+          <li>AI 的提效<b>不会</b>体现为"总工时变少"，而是体现为"同一份工时喂饱了更多需求"。</li>
+          <li>要看三条曲线：单位需求人日（分档）↓、人均并发需求 ↑（要配合吞吐和周期看）、同等人力的吞吐当量 ↑。</li>
+          <li>工时<b>总量</b>可信（受名册约束），不可信的是工时<b>分到了哪个需求</b>。所以北极星只用总量，绕开最脏的数据。</li>
+        </ol>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">1.3</span>设计原则</h3>
+        <ol class="nums">
+          <li><b>大账尽量不依赖人工填报的明细。</b>北极星的分母用名册，分子用档位当量。</li>
+          <li><b>不新增研发侧的填报负担。</b>PR 带需求号推了 4 个月仍难强制，TL 改变填法也推行不了。研发只沿用现有动作（报工、排期时填评估人日）；唯一新增的是每月纠偏中少量例外需求的确认，不处理也有默认规则兜底。</li>
+          <li><b>数据门禁。</b>每个指标标注就绪等级，校验不过只出底数，不出结论。</li>
+          <li><b>边度量边治理。</b>不等数据全部干净才出数，用门禁控制结论强弱。</li>
+          <li><b>归因克制。</b>效率变化包含 AI、流程改进、人员熟练等多种因素，统一表述为"与 AI 推广同期的提效"。</li>
+          <li><b>统一坐标系。</b>所有指标都能下钻到"战场 × 规模档 × 时间"。</li>
+        </ol>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">1.4</span>红线</h3>
+        <div class="grid g2">
+          <div class="card"><h4>最小必要、匿名聚合</h4><p>看板最细到"战场 × 团队 × 周"，不出个人结果。</p></div>
+          <div class="card"><h4>不进 KPI</h4><p>个人级的工时、提交记录只用于校验和匿名治理，不用于个人评价。</p></div>
+          <div class="card"><h4>不读会话原文</h4><p>AI 会话只取统计特征。</p></div>
+          <div class="card"><h4>知情授权、访问控制</h4><p>个人级明细的访问需审批并留痕。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 第二部分 ============ -->
+    <section class="part" id="p2">
+      <div class="part-head">
+        <div class="part-no">第二部分</div>
+        <h2>统一口径</h2>
+        <p>所有指标都必须落在统一坐标系 战场 × 规模档 × 时间 上。规模档的口径单独在第三部分说明。</p>
+      </div>
+
+      <div class="axes">
+        <div class="axis"><div class="kicker">维度一</div><div class="ax">战场</div><div class="vals"><span>消金</span><span>信贷</span><span>支付</span><span>保险</span></div><p>人日按人归属，需求按主档归属</p></div>
+        <div class="axis"><div class="kicker">维度二</div><div class="ax">规模档</div><div class="vals"><span>XS</span><span>S</span><span>M</span><span>L</span></div><p>预估工作量定档 + 每月纠偏，见第三部分</p></div>
+        <div class="axis"><div class="kicker">维度三</div><div class="ax">时间</div><div class="vals"><span>周</span><span>月</span><span>滚动 3 个月</span></div><p>承诺口径按排期月，产出口径按上线月</p></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">2.1</span>战场</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>对象</th><th>归属规则</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">人日</td><td><b>人属于哪个战场，人日就归哪个战场</b>，以 HR / PMO 名册为准</td></tr>
+            <tr><td class="nowrap">需求</td><td>按 iSmart 需求主档的战场字段归属</td></tr>
+            <tr><td class="nowrap">跨战场需求</td><td>拆成各战场各自的需求，分别计入各战场吞吐。原始业务需求保留"父需求 ID"，只用来看端到端周期，<b>不重复计入吞吐</b></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">2.2</span>时间：两个口径</h3>
+        <div class="times">
+          <div class="card"><div class="kicker">承诺口径 · 主要用户：战场业务方</div><h4>按排期月（以月初冻结快照为准）</h4><p>回答"答应业务方的交了没有"：当月兑现率、M+1 / M+2 累计兑现率。</p></div>
+          <div class="card"><div class="kicker">产出口径 · 主要用户：效能分析</div><h4>按上线月（以生产发布日期为准）</h4><p>回答"产能多少、效率怎样"：吞吐当量、效率指数、研发周期。</p></div>
+        </div>
+        <p class="note">两个口径每月用桥接表打通，见 7.4。</p>
+        <div class="tbl"><table>
+          <thead><tr><th>名称</th><th>定义</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">周</td><td>周一至周日</td></tr>
+            <tr><td class="nowrap">月</td><td>自然月</td></tr>
+            <tr><td class="nowrap">工作日</td><td>按公司日历，扣除法定节假日</td></tr>
+            <tr><td class="nowrap">上线日</td><td>需求最后一次生产发布的日期；发布记录关联不到需求时，暂用 iSmart 实际上线日并打标记</td></tr>
+            <tr><td class="nowrap">排期冻结日</td><td>每月第 3 个工作日。冻结后快照不可修改，月内调整记为"插入"或"移出"</td></tr>
+            <tr><td class="nowrap">滚动 3 个月</td><td>含当月在内的最近 3 个自然月。效能结论一律用这个窗口；单月数字只看趋势</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">2.3</span>需求单元</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th>口径</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">统计单元</td><td>iSmart 中的一个需求 ID</td></tr>
+            <tr><td class="nowrap">纳入吞吐</td><td>业务需求、技术需求（默认口径，可按实际类型调整）</td></tr>
+            <tr><td class="nowrap">不纳入吞吐</td><td>生产缺陷修复、运维事务、咨询支持。它们消耗的人日仍在名册可用人日里，体现在"有效工时占比"上</td></tr>
+            <tr><td class="nowrap">取消</td><td>已取消的需求不计吞吐，在桥接表中计入"取消 / 移出"</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">2.4</span>资源与名册可用人日</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th>口径</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">资源类别</td><td>正式、数马；外包只在历史期单独列示</td></tr>
+            <tr><td class="nowrap">名册可用人日</td><td>Σ 每人每月在册的工作日。月中入职、离职、裁撤按实际在册天数计算；不扣请假</td></tr>
+            <tr><td class="nowrap">名册来源</td><td>HR / PMO 月表，经校验 1.1 与 iSmart 报工人员对账后使用</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">2.5</span>基线期</h3>
+        <div class="callout">
+          <p><strong>AI 工具大规模推广前连续 6 个月。</strong>起止月份：<span class="mono">____年__月 – ____年__月</span>（待确认）。</p>
+          <p>用途：确定档位阈值、档位权重和 k 值，作为效率指数 1.00 的参照。基线期的外包人日计入基线期名册可用人日。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 第三部分 ============ -->
+    <section class="part" id="p3">
+      <div class="part-head">
+        <div class="part-no">第三部分</div>
+        <h2>规模定档：预估工作量 + 每月纠偏</h2>
+        <p>规模档决定需求当量，是北极星的分子，必须尽量准。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">3.1</span>为什么这样定</h3>
+        <ul class="dots">
+          <li>我们考虑过按<b>修改点</b>定档（涉及几个系统、几个接口、几个页面），这种方式不随效能漂移，但需要战场知识库、需求文档质量、需求与代码变更关联三项前提，当前难度太大，放入<a href="#p9">第九部分</a>讨论。</li>
+          <li>当前方案用 <b>TL 排期时已经在填的评估人日</b>定档：零新增填报，业务方也熟悉这个口径。</li>
+          <li>代价是评估人日本身不准，而且会随 AI 提效逐渐变小。所以配套<b>每月纠偏</b>，用实际数据持续修正档位。</li>
+        </ul>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">3.2</span>定档规则</h3>
+        <div class="viz">
+          <div class="viz-title"><h4>档位阈值（按评估人日，示意）</h4><span>P0 用基线期评估人日的分布确定，之后冻结</span></div>
+          <div class="scale">
+            <div class="bar">
+              <div class="seg"><b>XS</b><span>≤ 3 人日</span></div>
+              <div class="seg"><b>S</b><span>4–10</span></div>
+              <div class="seg"><b>M</b><span>11–30</span></div>
+              <div class="seg"><b>L</b><span>&gt; 30 人日</span></div>
+            </div>
+            <div class="axisl"><span>0</span><span>3</span><span>10</span><span>30 →</span></div>
+          </div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">定档依据</td><td>TL 排期时填写的评估人日（正式 + 数马）</td></tr>
+            <tr><td class="nowrap">定档时点</td><td>随月初排期快照一起冻结，得到<b>初始档</b>；计划外插入的需求在插入时定档并冻结</td></tr>
+            <tr><td class="nowrap">档位变更</td><td>只能通过每月纠偏或范围变更重估，全部留痕</td></tr>
+            <tr><td class="nowrap">缺失处理</td><td>没有评估人日的需求不定档，计入校验 3.1，月报中单列</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">3.3</span>需求当量</h3>
+        <div class="formula">
+          <div class="eq"><em>需求当量</em> = 档位权重 × k</div>
+          <div class="sub">档位权重：基线期该档上线需求实际人日的中位数，冻结（示意：XS 2、S 6、M 18、L 45）。k 值：基线期名册可用人日 ÷ 基线期上线需求的档位权重合计，使基线期效率指数正好等于 1.00。</div>
+        </div>
+        <p class="lead"><b>为什么用档位权重，而不直接用评估人日：</b>同一档内估多估少不影响当量，估算噪声被吸收；只有跨档才有影响，而跨档正是纠偏要处理的。</p>
+        <h4>算例：虚拟战场 A，基线期 6 个月，20 人</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>档位</th><th class="num">档位权重</th><th class="num">基线期上线数</th><th class="num">权重合计</th></tr></thead>
+          <tbody>
+            <tr><td>XS</td><td class="num">2</td><td class="num">90</td><td class="num">180</td></tr>
+            <tr><td>S</td><td class="num">6</td><td class="num">110</td><td class="num">660</td></tr>
+            <tr><td>M</td><td class="num">18</td><td class="num">45</td><td class="num">810</td></tr>
+            <tr><td>L</td><td class="num">45</td><td class="num">10</td><td class="num">450</td></tr>
+            <tr class="tot"><td>合计</td><td class="num"></td><td class="num">255</td><td class="num">2,100</td></tr>
+          </tbody>
+        </table></div>
+        <div class="tiles">
+          <div class="tile"><div class="tl">名册可用人日</div><div class="tv">2,520</div><div class="ts">20 × 21 × 6</div></div>
+          <div class="tile"><div class="tl">k 值</div><div class="tv">1.2</div><div class="ts">2,520 ÷ 2,100</div></div>
+          <div class="tile"><div class="tl">基线期效率指数</div><div class="tv">1.00</div><div class="ts">2,100 × 1.2 ÷ 2,520</div></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">3.4</span>每月纠偏</h3>
+        <p class="lead">目的：让档位尽量接近需求的真实规模，同时不把 AI 带来的提效"纠"掉。</p>
+        <div class="callout">
+          <p><strong>核心原则：只按实际上调，不按实际下调。</strong></p>
+          <p><b>上调是安全的：</b>实际人日是用了 AI 之后的人日，是需求规模的下限。实际已经落在更高的档，说明需求至少这么大，上调不会高估。</p>
+          <p><b>下调要有证据：</b>实际人日比预估少很多，可能是估高了，也可能正是 AI 提效。如果按实际下调，提效就被纠掉了。所以默认不下调，只有确认是范围缩减或拆单时才下调。</p>
+        </div>
+        <div class="decide">
+          <div class="dstart">本月上线需求：比对 初始档（冻结） 与 实际档（按实际人日） <small>系统每月自动生成纠偏清单</small></div>
+          <div class="branches">
+            <div class="br"><div class="cond">实际档 = 初始档 ± 1</div><h4>一致或差一档</h4><p class="res-keep">不改档</p><p>计入估算偏差统计。</p><div class="who">系统自动</div></div>
+            <div class="br up"><div class="cond">实际档 ≥ 初始档 + 2</div><h4>实际高出两档及以上</h4><p class="res-up">上调到实际档</p><p>该团队校验 1.4（工时归属）为红灯时，改为 TL 确认。</p><div class="who">系统自动</div></div>
+            <div class="br down"><div class="cond">实际档 ≤ 初始档 − 2</div><h4>实际低出两档及以上</h4><p class="res-keep">默认保持原档</p><p>TL 可选"范围缩减 / 拆单"并重估，按重估结果改档。</p><div class="who">TL 选择，不处理即保持原档</div></div>
+            <div class="br"><div class="cond">任何时候</div><h4>范围变更</h4><p class="res-keep">按重估改档</p><p>需求中途扩大或缩小，TL 重估，按新评估人日改档。</p><div class="who">TL</div></div>
+          </div>
+        </div>
+        <h4>算例</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>需求</th><th>评估人日 → 初始档</th><th>实际人日 → 实际档</th><th>情形</th><th>结果</th></tr></thead>
+          <tbody>
+            <tr><td>甲</td><td class="nowrap">8 → S</td><td class="nowrap">40 → L</td><td>实际高出两档</td><td><span class="res-up">自动上调为 L</span></td></tr>
+            <tr><td>乙</td><td class="nowrap">25 → M</td><td class="nowrap">9 → S</td><td>差一档</td><td><span class="res-keep">保持 M</span>，计入偏差统计</td></tr>
+            <tr><td>丙</td><td class="nowrap">35 → L</td><td class="nowrap">2 → XS</td><td>实际低出三档</td><td><span class="res-keep">默认保持 L</span>；TL 若确认是需求拆分并重估为 3 人日，则改为 XS</td></tr>
+          </tbody>
+        </table></div>
+        <h4>时间表</h4>
+        <div class="steps">
+          <div class="step"><div class="when">每月最后一个工作日</div><p>截止本月上线需求，生成纠偏清单</p></div>
+          <div class="step"><div class="when">次月第 3 个工作日</div><p>新月排期冻结（含评估人日）</p></div>
+          <div class="step"><div class="when">次月第 5 个工作日</div><p>TL 完成例外确认；逾期按默认规则处理</p></div>
+          <div class="step"><div class="when">次月第 7 个工作日</div><p>纠偏结果写回定档结果表，档位锁定；发布月报</p></div>
+        </div>
+        <ul class="dots note">
+          <li>纠偏只针对已上线的需求；在制需求等上线后再纠偏。</li>
+          <li>档位锁定后不再变动；之后发现的问题，在下月作为调整项处理并注明。</li>
+        </ul>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">3.5</span>已知局限与监控</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>局限</th><th>影响</th><th>监控与应对</th></tr></thead>
+          <tbody>
+            <tr><td>评估人日随 AI 整体变小</td><td>档位下漂，效率被<b>低估</b>（偏保守）</td><td>校验 3.3：档位分布对比基线、战场接口变更趋势对比当量趋势；看板标注"预估定档，可能偏保守"</td></tr>
+            <tr><td>故意估高</td><td>档位虚高，效率被<b>高估</b></td><td>校验 3.3：团队估算偏差率（实际 ÷ 评估）相对自身历史突变时抽查；按团队公示</td></tr>
+            <tr><td>依赖工时计算实际人日</td><td>工时不准会导致误纠偏</td><td>自动上调以校验 1.4 为前提，红灯团队转 TL 确认</td></tr>
+            <tr><td>工作量口径终究会随效能漂移</td><td>长期偏差会累积</td><td>远期方向见第九部分"修改点定档"</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ 第四部分 ============ -->
+    <section class="part" id="p4">
+      <div class="part-head">
+        <div class="part-no">第四部分</div>
+        <h2>指标体系</h2>
+        <p>一个北极星，四个指标域加一条护栏，共 25 个指标。★ 表示进总览。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">4.1</span>结构</h3>
+        <div class="ns"><b>北极星：E01 效率指数</b><span>Σ 上线需求当量 ÷ Σ 名册可用人日</span></div>
+        <div class="legend"><span>P1 首版账本时的就绪等级：</span><span class="pill rd-c">结论级</span><span class="pill rd-b">底数级</span><span class="pill rd-n">不出</span></div>
+        <div class="doms">
+          <div class="dom"><h4>A 研发效率</h4>
+            <div class="ind st"><span class="id">E01</span><span class="nm">效率指数</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind st"><span class="id">E02</span><span class="nm">吞吐当量</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">E03</span><span class="nm">上线需求数</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind st"><span class="id">E04</span><span class="nm">研发周期 P50 / P85</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">E05</span><span class="nm">承诺兑现率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">E06</span><span class="nm">计划膨胀率</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">E07</span><span class="nm">分档单位人日</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+          </div>
+          <div class="dom"><h4>B 人效</h4>
+            <div class="ind st"><span class="id">P01</span><span class="nm">人均吞吐当量</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind st"><span class="id">P02</span><span class="nm">人均并发需求</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">P03</span><span class="nm">有效工时占比</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">P04</span><span class="nm">资源结构</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">P05</span><span class="nm">填报饱和度</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+          </div>
+          <div class="dom"><h4>C AI 效能</h4>
+            <div class="ind"><span class="id">A01</span><span class="nm">AI 覆盖率</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">A02</span><span class="nm">会话挂接率</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind st"><span class="id">A03</span><span class="nm">等效人力</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">A04</span><span class="nm">挂接 vs 未挂接对照</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind st"><span class="id">A05</span><span class="nm">¥ / 当量</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
+            <div class="ind"><span class="id">A06</span><span class="nm">¥ / 提效人日、ROI</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
+            <div class="ind"><span class="id">A07</span><span class="nm">无效会话占比</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">A08</span><span class="nm">采纳率 / 留存率</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
+          </div>
+          <div class="dom"><h4>D 数据质量</h4>
+            <div class="ind st"><span class="id">Q01</span><span class="nm">数据校验达标率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">Q02</span><span class="nm">档位一致率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">Q03</span><span class="nm">纠偏率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+          </div>
+          <div class="dom"><h4>护栏</h4>
+            <div class="ind st"><span class="id">G01</span><span class="nm">上线后 30 天缺陷数 / 当量</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
+            <div class="ind"><span class="id">G02</span><span class="nm">回滚率</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">4.2</span>五个问题对应的总览指标</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>问题</th><th>总览指标</th><th>辅助指标</th></tr></thead>
+          <tbody>
+            <tr><td>效率怎么样</td><td>E01 效率指数</td><td>E02 吞吐当量、E04 研发周期</td></tr>
+            <tr><td>AI 顶了多少</td><td>A03 等效人力</td><td>A04 对照法</td></tr>
+            <tr><td>人有没有被喂饱</td><td>P01 人均吞吐当量</td><td>P02 人均并发需求</td></tr>
+            <tr><td>数据能不能信</td><td>Q01 数据校验达标率</td><td>Q02 档位一致率</td></tr>
+            <tr><td>AI 的效率如何</td><td>A05 ¥ / 当量</td><td>A06 ROI</td></tr>
+            <tr><td>护栏</td><td>G01 上线后 30 天缺陷数 / 当量</td><td>G02 回滚率</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">4.3</span>指标总表</h3>
+        <p class="note">"依赖校验"的编号见第六部分；任一依赖校验为红灯时，该指标降为底数级。结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>。</p>
+        <div class="tbl"><table>
+          <thead><tr><th>编号</th><th>指标</th><th>★</th><th>当前就绪等级</th><th>依赖校验</th></tr></thead>
+          <tbody>
+            <tr class="grp"><td colspan="5">A 研发效率</td></tr>
+            <tr><td class="mono">E01</td><td>效率指数（北极星）</td><td class="star">★</td><td><span class="pill rd-c">结论级</span> 标注"预估定档"</td><td><div class="chips"><span class="chip">1.1</span><span class="chip">2.1</span><span class="chip">2.2</span><span class="chip">2.3</span><span class="chip">3.1</span><span class="chip">3.2</span></div></td></tr>
+            <tr><td class="mono">E02</td><td>吞吐当量</td><td class="star">★</td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">2.1</span><span class="chip">2.2</span><span class="chip">2.3</span><span class="chip">3.1</span><span class="chip">3.2</span></div></td></tr>
+            <tr><td class="mono">E03</td><td>上线需求数</td><td></td><td><span class="pill rd-b">底数级</span> 易受拆单影响，只作辅助</td><td><div class="chips"><span class="chip">2.1</span><span class="chip">2.3</span></div></td></tr>
+            <tr><td class="mono">E04</td><td>研发周期 P50 / P85</td><td class="star">★</td><td><span class="pill rd-b">底数级</span> 4.1 达标后结论级</td><td><div class="chips"><span class="chip">4.1</span></div></td></tr>
+            <tr><td class="mono">E05</td><td>承诺兑现率（当月、M+1、M+2）</td><td></td><td><span class="pill rd-c">结论级</span> 冻结快照上线后</td><td><div class="chips"><span class="chip">2.2</span><span class="chip">4.2</span></div></td></tr>
+            <tr><td class="mono">E06</td><td>计划膨胀率</td><td></td><td><span class="pill rd-b">底数级</span> 冻结快照上线后</td><td><div class="chips"><span class="chip">4.2</span></div></td></tr>
+            <tr><td class="mono">E07</td><td>分档单位人日（诊断）</td><td></td><td><span class="pill rd-b">底数级</span> 始终为诊断用</td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.3</span><span class="chip">1.4</span><span class="chip">3.2</span></div></td></tr>
+            <tr class="grp"><td colspan="5">B 人效</td></tr>
+            <tr><td class="mono">P01</td><td>人均吞吐当量</td><td class="star">★</td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">1.1</span><span class="chip">2.1</span><span class="chip">2.3</span><span class="chip">3.1</span><span class="chip">3.2</span></div></td></tr>
+            <tr><td class="mono">P02</td><td>人均并发需求</td><td class="star">★</td><td><span class="pill rd-b">底数级</span> 工时治理转绿后结论级</td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.3</span><span class="chip">1.4</span><span class="chip">2.2</span></div></td></tr>
+            <tr><td class="mono">P03</td><td>有效工时占比</td><td></td><td><span class="pill rd-b">底数级</span></td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.3</span><span class="chip">1.4</span></div></td></tr>
+            <tr><td class="mono">P04</td><td>资源结构（正式 / 数马）</td><td></td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">1.1</span></div></td></tr>
+            <tr><td class="mono">P05</td><td>填报饱和度</td><td></td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">1.1</span><span class="chip">1.2</span></div></td></tr>
+            <tr class="grp"><td colspan="5">C AI 效能</td></tr>
+            <tr><td class="mono">A01</td><td>AI 覆盖率</td><td></td><td><span class="pill rd-b">底数级</span></td><td><div class="chips"><span class="chip">5.1</span></div></td></tr>
+            <tr><td class="mono">A02</td><td>会话挂接率</td><td></td><td><span class="pill rd-b">底数级</span></td><td><div class="chips"><span class="chip">5.1</span></div></td></tr>
+            <tr><td class="mono">A03</td><td>AI 同期提效人日 / 等效人力</td><td class="star">★</td><td><span class="pill rd-c">结论级</span> 随 E01</td><td><div class="chips"><span class="chip">1.1</span><span class="chip">2.1</span><span class="chip">2.2</span><span class="chip">2.3</span><span class="chip">3.1</span><span class="chip">3.2</span></div></td></tr>
+            <tr><td class="mono">A04</td><td>AI 挂接 vs 未挂接需求对照</td><td></td><td><span class="pill rd-b">底数级</span> 只作佐证</td><td><div class="chips"><span class="chip">1.4</span><span class="chip">5.1</span></div></td></tr>
+            <tr><td class="mono">A05</td><td>¥ / 当量</td><td class="star">★</td><td><span class="pill rd-n">不出</span> Token 明细上线后结论级</td><td><div class="chips"><span class="chip">2.1</span><span class="chip">3.1</span><span class="chip">3.2</span><span class="chip">5.2</span></div></td></tr>
+            <tr><td class="mono">A06</td><td>¥ / 提效人日、ROI</td><td></td><td><span class="pill rd-n">不出</span> Token 明细上线后结论级</td><td><div class="chips"><span class="chip">5.2</span></div></td></tr>
+            <tr><td class="mono">A07</td><td>无效会话占比</td><td></td><td><span class="pill rd-b">底数级</span></td><td><div class="chips"><span class="chip">5.1</span></div></td></tr>
+            <tr><td class="mono">A08</td><td>AI 产出采纳率 / 留存率</td><td></td><td><span class="pill rd-n">不出</span> 需补建埋点</td><td>—</td></tr>
+            <tr class="grp"><td colspan="5">D 数据质量</td></tr>
+            <tr><td class="mono">Q01</td><td>数据校验达标率</td><td class="star">★</td><td><span class="pill rd-c">结论级</span></td><td>—</td></tr>
+            <tr><td class="mono">Q02</td><td>档位一致率</td><td></td><td><span class="pill rd-c">结论级</span> 首轮纠偏后</td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.4</span></div></td></tr>
+            <tr><td class="mono">Q03</td><td>纠偏率</td><td></td><td><span class="pill rd-c">结论级</span> 首轮纠偏后</td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.4</span></div></td></tr>
+            <tr class="grp"><td colspan="5">护栏</td></tr>
+            <tr><td class="mono">G01</td><td>上线后 30 天缺陷数 / 当量</td><td class="star">★</td><td><span class="pill rd-n">不出</span> 补建后结论级</td><td><div class="chips"><span class="chip">2.4</span></div></td></tr>
+            <tr><td class="mono">G02</td><td>回滚率</td><td></td><td><span class="pill rd-n">不出</span> 补建后结论级</td><td><div class="chips"><span class="chip">2.4</span></div></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">4.4</span>核心指标卡</h3>
+        <div class="cards4">
+          <div class="icard"><div class="ih"><span class="id">E01</span><b>效率指数（北极星）</b></div><code>Σ 上线需求当量 ÷ Σ 名册可用人日</code><p>同样的人日，交付的活比 AI 推广前多了还是少了。下钻 战场 × 规模档 × 月；滚动 3 个月，基线期 = 1.00。</p><p>误读风险：评估人日下漂会让指数偏保守；指数上升但 G01 恶化属于"提速降质"；指数包含 AI 以外的因素。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E02</span><b>吞吐当量</b></div><code>Σ 当期上线需求的当量</code><p>拆单的影响被档位权重大幅削弱，这是用当量而不用需求数的原因。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E04</span><b>研发周期</b></div><code>上线日 − 立项日；上线日 − 开发开始日（工作日）</code><p>按上线月分组取 P50 和 P85，必须分档看。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E05</span><b>承诺兑现率</b></div><code>本月排期且本月上线数 ÷ 本月排期数</code><p>M+1 / M+2 按排期月分批累计。这是承诺口径，和"当月上线数"的差见桥接表。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E06</span><b>计划膨胀率</b></div><code>本月移出数 ÷ 本月排期数</code><p>结合移出原因看。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E07</span><b>分档单位人日</b></div><code>某档上线需求报工人日合计 ÷ 该档上线需求数</code><p>只用于诊断，不进总览。</p></div>
+          <div class="icard"><div class="ih"><span class="id">P01</span><b>人均吞吐当量</b></div><code>Σ 上线需求当量 ÷ 名册月均在册人数 ÷ 月数</code><p>与 E01 同源，额外价值是可以按正式 / 数马拆开看。</p></div>
+          <div class="icard"><div class="ih"><span class="id">P02</span><b>人均并发需求</b></div><code>Σ（人 × 周 × 需求）组合数 ÷ Σ 在册人周</code><p>一个人一周内对某需求报过工，就算在做这个需求。必须配合吞吐和周期看，见 5.2。</p></div>
+          <div class="icard"><div class="ih"><span class="id">P03</span><b>有效工时占比</b></div><code>挂到纳入吞吐需求上的工时 ÷ 总报工工时</code><p>看非需求工作占用了多少产能。</p></div>
+          <div class="icard"><div class="ih"><span class="id">P04 / P05</span><b>资源结构 / 填报饱和度</b></div><code>P05 = 实填人日 ÷ 应填人日</code><p>P04 为正式与数马的人数及占比。</p></div>
+          <div class="icard"><div class="ih"><span class="id">A03</span><b>等效人力</b></div><code>提效人日 = Σ 当量 − Σ 名册可用人日；等效人力 = 月均提效人日 ÷ 月工作日</code><p>与数马减少人数对账。</p></div>
+          <div class="icard"><div class="ih"><span class="id">A05</span><b>¥ / 当量</b></div><code>Σ AI 费用 ÷ Σ 上线需求当量</code><p>Token 明细标准化前不出。</p></div>
+          <div class="icard"><div class="ih"><span class="id">Q01</span><b>数据校验达标率</b></div><code>绿灯校验项数 ÷ 校验项总数</code><p>并列出红灯项。它决定其他指标的就绪等级。</p></div>
+          <div class="icard"><div class="ih"><span class="id">Q02 / Q03</span><b>档位一致率 / 纠偏率</b></div><code>Q02 = 初始档与实际档相同或差一档的占比；Q03 = 当月改档占比</code><p>两者都是每月纠偏的产出。</p></div>
+          <div class="icard"><div class="ih"><span class="id">G01</span><b>上线后 30 天缺陷数 / 当量</b></div><code>上线后 30 天缺陷数 ÷ 该批需求当量</code><p>相对基线恶化超过阈值时，该战场 E01 在总览上一律标黄。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 第五部分 ============ -->
+    <section class="part" id="p5">
+      <div class="part-head">
+        <div class="part-no">第五部分</div>
+        <h2>衡量方法</h2>
+        <p>效率、人效、AI 效能和 Token 各怎么算。算例统一使用虚拟战场 A。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.1</span>研发效率</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>组成</th><th>口径</th><th>为什么这样取</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">分子：需求当量</td><td>档位权重 × k，档位来自预估工作量定档并经每月纠偏</td><td>档内估算噪声被吸收；纠偏只上调不下调，不会把提效纠掉</td></tr>
+            <tr><td class="nowrap">分母：名册可用人日</td><td>按人的所属战场归集</td><td>不依赖工时分配的准确性</td></tr>
+            <tr><td class="nowrap">窗口</td><td>滚动 3 个月</td><td>抹平跨月需求造成的边界效应</td></tr>
+            <tr><td class="nowrap">基准</td><td>基线期 = 1.00</td><td>由 k 值保证</td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="viz">
+          <div class="viz-title"><h4>战场 A：人少了 20%，交付只少了 5%</h4><span>相对基线，基线 = 100</span></div>
+          <div class="key"><span><i style="background:var(--ref)"></i>基线期（6 个月）</span><span><i style="background:var(--s1)"></i>当期（滚动 3 个月）</span></div>
+          <div class="gbar" role="img" aria-label="在册人数 100 降到 80；月均当量 100 降到 95；效率指数 100 升到 119">
+            <div class="ref100" style="bottom:calc(100% * 100 / 130)"><em>100</em></div>
+            <div class="grp">
+              <div class="b base" style="height:calc(100% * 100 / 130)" data-tip="基线期在册人数：20 人" tabindex="0"><span>20 人</span></div>
+              <div class="b cur" style="height:calc(100% * 80 / 130)" data-tip="当期在册人数：16 人（数马减少 4 人），相当于基线的 80" tabindex="0"><span>16 人</span></div>
+            </div>
+            <div class="grp">
+              <div class="b base" style="height:calc(100% * 100 / 130)" data-tip="基线期月均当量：420" tabindex="0"><span>420</span></div>
+              <div class="b cur" style="height:calc(100% * 95.2 / 130)" data-tip="当期月均当量：400，相当于基线的 95" tabindex="0"><span>400</span></div>
+            </div>
+            <div class="grp">
+              <div class="b base" style="height:calc(100% * 100 / 130)" data-tip="基线期效率指数：1.00" tabindex="0"><span>1.00</span></div>
+              <div class="b cur" style="height:calc(100% * 119 / 130)" data-tip="当期效率指数：1.19，相当于基线的 119" tabindex="0"><span>1.19</span></div>
+            </div>
+          </div>
+          <div class="gx"><div>在册人数<small>100 → 80</small></div><div>月均当量<small>100 → 95</small></div><div>效率指数<small>100 → 119</small></div></div>
+        </div>
+
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th class="num">基线期（6 个月）</th><th class="num">当期（滚动 3 个月）</th></tr></thead>
+          <tbody>
+            <tr><td>在册人数</td><td class="num">20</td><td class="num">16（数马减少 4 人）</td></tr>
+            <tr><td>名册可用人日</td><td class="num">20 × 21 × 6 = 2,520</td><td class="num">16 × 21 × 3 = 1,008</td></tr>
+            <tr><td>上线需求（XS / S / M / L）</td><td class="num">90 / 110 / 45 / 10，共 255</td><td class="num">41 / 63 / 25 / 2，共 131</td></tr>
+            <tr><td>档位权重合计</td><td class="num">2,100</td><td class="num">1,000</td></tr>
+            <tr><td>需求当量（× k = 1.2）</td><td class="num">2,520</td><td class="num">1,200</td></tr>
+            <tr><td>月均当量</td><td class="num">420</td><td class="num">400</td></tr>
+            <tr class="tot"><td>效率指数</td><td class="num">1.00</td><td class="num">1.19</td></tr>
+          </tbody>
+        </table></div>
+        <p class="lead"><b>怎么读：</b>人少了 4 个（−20%），月均交付当量只从 420 降到 400（−5%）。效率提升约 19%。</p>
+        <p class="lead"><b>为什么不用"单位需求人日"做北极星：</b>它依赖工时分配的准确性、受档位结构影响、受拆单影响。保留为 E07，只作诊断。</p>
+        <p class="lead"><b>辅助指标：</b>E04 研发周期看速度，必须分档；E05 承诺兑现率看对业务方的承诺；E06 计划膨胀率看排期稳定性。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.2</span>人效</h3>
+        <div class="tiles">
+          <div class="tile"><div class="tl">P01 基线期</div><div class="tv">21</div><div class="ts">当量 / 人·月（2,520 ÷ 20 ÷ 6）</div></div>
+          <div class="tile"><div class="tl">P01 当期</div><div class="tv">25</div><div class="ts">当量 / 人·月（1,200 ÷ 16 ÷ 3），提升约 19%，与效率指数一致</div></div>
+        </div>
+        <h4>人均并发需求（P02）与利特尔定律</h4>
+        <p class="lead">并发上升不一定是好事：如果并发上升但吞吐没涨、周期变长，说明是多线程空转，而不是被"喂饱"。所以用利特尔定律做一致性校验。</p>
+        <div class="formula">
+          <div class="eq"><em>开发中在制数</em> ≈ 日吞吐 × 平均周期（工作日）</div>
+          <div class="sub">算例：战场 A 当月上线 44 个需求，日吞吐 ≈ 44 ÷ 21 ≈ 2.1 个；开发中在制平均 25 个，推算平均周期 ≈ 25 ÷ 2.1 ≈ 12 个工作日。里程碑算出的周期 P50 也在 12 天左右，数据自洽；如果是 20 天，说明里程碑不准（查校验 4.1）或在制状态没有及时更新（查校验 2.2）。</div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>P02 人均并发</th><th>E02 吞吐</th><th>E04 周期</th><th>判断</th></tr></thead>
+          <tbody>
+            <tr><td>↑</td><td>↑</td><td>持平或 ↓</td><td><span class="lv g"><i></i>被喂饱了，健康</span></td></tr>
+            <tr><td>↑</td><td>持平</td><td>↑</td><td><span class="lv r"><i></i>多线程空转，需要控制在制</span></td></tr>
+            <tr><td>持平</td><td>↑</td><td>↓</td><td><span class="lv g"><i></i>单需求做得更快，健康</span></td></tr>
+            <tr><td>↓</td><td>↓</td><td>—</td><td><span class="lv y"><i></i>需求供给不足，查业务需求池</span></td></tr>
+          </tbody>
+        </table></div>
+        <p class="lead"><b>有效工时占比（P03）：</b>P03 下降而 E01 持平，说明研发在需求上的效率其实提高了，只是被缺陷修复、运维等非需求工作吃掉了一部分。</p>
+        <p class="lead"><b>资源结构（P04）：</b>正式与数马的人数和占比，与等效人力 A03 对照，回答"AI 顶上的部分是否覆盖了数马的减少"。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.3</span>AI 效能</h3>
+        <div class="layers">
+          <div class="layer"><div class="ln">采用层<small>用起来了没有</small></div><p>A01 覆盖率、A02 会话挂接率</p><span class="pill rd-b">底数级</span></div>
+          <div class="layer"><div class="ln">产出层<small>产出了什么</small></div><p>AI 代码行占比（仅辅助）、A08 采纳率 / 留存率</p><span class="pill rd-n">A08 不出</span></div>
+          <div class="layer"><div class="ln">结果层<small>顶了多少</small></div><p>A03 等效人力、A04 对照</p><span class="pill rd-c">A03 结论级</span></div>
+          <div class="layer"><div class="ln">成本层<small>花得值不值</small></div><p>A05 ¥ / 当量、A06 ROI、A07 无效会话占比</p><span class="pill rd-n">A05 / A06 不出</span></div>
+        </div>
+        <h4>主口径：缺口法</h4>
+        <div class="formula">
+          <div class="eq"><em>AI 同期提效人日</em> = Σ 需求当量 − Σ 名册可用人日</div>
+          <div class="eq"><em>等效人力</em> = 月均提效人日 ÷ 月工作日</div>
+        </div>
+        <div class="tiles">
+          <div class="tile"><span class="sample">示例：战场 A</span><div class="tl">提效人日（3 个月）</div><div class="tv">192</div><div class="ts">1,200 − 1,008</div></div>
+          <div class="tile"><span class="sample">示例：战场 A</span><div class="tl">等效人力</div><div class="tv">≈ 3.0 人</div><div class="ts">192 ÷ 3 ÷ 21</div></div>
+          <div class="tile"><span class="sample">示例：战场 A</span><div class="tl">同期数马减少</div><div class="tv">4 人</div><div class="ts">AI 同期顶上约 3 人，约 1 人的缺口体现为交付量小幅下降</div></div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>情况</th><th>解读</th></tr></thead>
+          <tbody>
+            <tr><td>等效人力 ≥ 数马减少人数</td><td>提效覆盖了减员</td></tr>
+            <tr><td>等效人力 &lt; 数马减少人数</td><td>提效部分覆盖减员，交付量有所下降</td></tr>
+            <tr><td>等效人力 ≤ 0</td><td>没有看到提效；先检查评估人日是否明显下漂（校验 3.3）</td></tr>
+          </tbody>
+        </table></div>
+        <p class="lead"><b>辅助口径：对照法（A04）。</b>同战场同档位内，比较"有 AI 会话挂接的需求"和"没有挂接的需求"的单位人日。用不用 AI 不是随机的，存在选择偏差，只作佐证。</p>
+        <p class="lead"><b>归因：</b>缺口法和对照法方向一致时，可以说"有证据表明 AI 是提效的主要因素之一"；否则只说"与 AI 推广同期的提效"。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.4</span>Token Efficiency</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>指标</th><th>公式</th><th>含义</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">A05 ¥ / 当量</td><td>Σ AI 费用 ÷ Σ 上线需求当量</td><td>每交付一个当量花多少 AI 费用</td></tr>
+            <tr><td class="nowrap">A06 ¥ / 提效人日</td><td>Σ AI 费用 ÷ 提效人日</td><td>每省一个人日花多少 AI 费用</td></tr>
+            <tr><td class="nowrap">A06 ROI</td><td>（提效人日 × 数马人日单价 − AI 费用）÷ AI 费用</td><td>和用数马相比的投入产出比</td></tr>
+            <tr><td class="nowrap">A07 无效会话占比</td><td>无执行计划或代码产出、也未挂接需求的会话 ÷ 总会话</td><td>Token 有没有浪费</td></tr>
+          </tbody>
+        </table></div>
+        <div class="tiles">
+          <div class="tile"><span class="sample">示例：战场 A，AI 费用 ¥60,000</span><div class="tl">¥ / 当量</div><div class="tv">¥50</div><div class="ts">60,000 ÷ 1,200</div></div>
+          <div class="tile"><span class="sample">示例：战场 A</span><div class="tl">¥ / 提效人日</div><div class="tv">¥312.5</div><div class="ts">60,000 ÷ 192</div></div>
+          <div class="tile"><span class="sample">示例：数马人日单价假设 ¥1,500</span><div class="tl">ROI</div><div class="tv">3.8 倍</div><div class="ts">（192 × 1,500 − 60,000）÷ 60,000</div></div>
+        </div>
+        <p class="note">数马人日单价为假设值，正式计算时以 PMO 提供的实际单价为准。只看 Token 总量没有意义，必须和产出（当量）一起看。</p>
+        <h4>Token 消耗明细标准（P1 补建）</h4>
+        <div class="chips"><span class="chip">会话 ID</span><span class="chip">起止时间</span><span class="chip">人员标识（哈希脱敏）</span><span class="chip">战场与团队</span><span class="chip">AI 工具及版本</span><span class="chip">模型及版本</span><span class="chip">输入 / 输出 / 缓存 Token 数</span><span class="chip">费用</span><span class="chip">关联需求 ID（可为空）</span><span class="chip">是否产出执行计划</span><span class="chip">是否产出代码</span></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.5</span>解读规则</h3>
+        <ol class="nums">
+          <li><b>先看门禁，再看数。</b>底数级的指标只描述现象，不下结论。</li>
+          <li><b>先看护栏。</b>G01 恶化超过阈值时，不论效率指数多高，该战场总览标黄。</li>
+          <li><b>看定档提示。</b>校验 3.3 提示下漂时，效率指数偏保守；提示估高时，效率指数可能偏高。</li>
+          <li><b>看趋势，不看单月。</b>结论用滚动 3 个月。</li>
+          <li><b>归因要克制。</b></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ 第六部分 ============ -->
+    <section class="part" id="p6">
+      <div class="part-head">
+        <div class="part-no">第六部分</div>
+        <h2>数据保障</h2>
+        <p>数据门禁决定结论的强弱；五域校验让数可信；裁决依据解决两边打架；存量治理清掉历史包袱。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.1</span>数据门禁</h3>
+        <div class="grid g3">
+          <div class="card"><span class="pill rd-c">结论级</span><p>可以下判断。依赖校验全部为绿或黄。</p></div>
+          <div class="card"><span class="pill rd-b">底数级</span><p>只出数，不下结论。任一依赖校验为红。</p></div>
+          <div class="card"><span class="pill rd-n">不出</span><p>数据缺失。数据源尚未补建。</p></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.2</span>五域校验</h3>
+        <p class="lead">原先的 V1–V8 规则按校验对象分散在多处（例如工时相关的规则分布在 V1、V3、V5、V6 中）。现在按<b>数据对象</b>收拢为五个域、15 项校验，每项标明它保障哪些指标的准确性。原编号对照见附录 C。</p>
+        <div class="vdoms">
+          <div class="vdom"><div class="vn">①</div><h4>人力与工时</h4><div class="vq">分母准不准，工时分到需求上准不准</div><ul><li><span>1.1</span>名册对账</li><li><span>1.2</span>填报完整</li><li><span>1.3</span>填报真实</li><li><span>1.4</span>工时归属</li></ul><div class="for">保障：E01 分母、P01–P05、E07、每月纠偏</div></div>
+          <div class="vdom"><div class="vn">②</div><h4>需求数量与状态</h4><div class="vq">交付了多少，交付了没有</div><ul><li><span>2.1</span>需求完整</li><li><span>2.2</span>状态一致</li><li><span>2.3</span>归属准确</li><li><span>2.4</span>质量关联</li></ul><div class="for">保障：E01 分子、E02、E05、桥接表、G01</div></div>
+          <div class="vdom"><div class="vn">③</div><h4>规模档</h4><div class="vq">每个需求值多少活</div><ul><li><span>3.1</span>评估完整</li><li><span>3.2</span>档位准确</li><li><span>3.3</span>漂移监控</li></ul><div class="for">保障：E01、E02、P01、A03、A05</div></div>
+          <div class="vdom"><div class="vn">④</div><h4>时间与排期</h4><div class="vq">什么时候交付的，答应了什么</div><ul><li><span>4.1</span>里程碑质量</li><li><span>4.2</span>排期快照</li></ul><div class="for">保障：E04、E05、E06、桥接表</div></div>
+          <div class="vdom"><div class="vn">⑤</div><h4>AI 与成本</h4><div class="vq">AI 用了多少，花了多少</div><ul><li><span>5.1</span>遥测覆盖</li><li><span>5.2</span>成本明细</li></ul><div class="for">保障：A01–A07</div></div>
+        </div>
+        <ul class="dots note">
+          <li><b>阈值</b>：下文阈值均为初始值，P0 跑出底数后按实际分布校准一次。</li>
+          <li><b>输出</b>：每项校验每周产出异常清单，按战场推送给战场接口人，写明责任人和关闭标准。</li>
+          <li><b>粒度</b>：异常清单可以到需求级；涉及个人级数据的校验，明细只给数据治理负责人，看板只出战场 / 团队级汇总。</li>
+        </ul>
+
+        <!-- ① -->
+        <div class="domain">
+          <h4>① 人力与工时 <small>分母准不准，工时分到需求上准不准</small></h4>
+          <div class="checks">
+            <div class="check">
+              <div class="ch"><span class="cid">1.1</span><b>名册对账</b><span class="tag">原 V5</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>在册但当月未报工的人数占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>有报工但不在名册的人数</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+                <tr><td>离职或裁撤后仍有报工的人数</td><td class="t">0</td><td class="t">1–2</td><td class="t">&gt; 2</td></tr>
+                <tr><td>名册战场与报工战场不一致的人数占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01 效率指数（分母）</span><span class="chip">P01 人均吞吐当量</span><span class="chip">P04 资源结构</span><span class="chip">P05 填报饱和度</span><span class="chip">A03 等效人力</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">1.2</span><b>填报完整</b><span class="tag">原 V1.1、V1.2、V1.4</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>缺填率（应填未填人周 ÷ 应填人周）</td><td class="t">≤ 3%</td><td class="t">3–8%</td><td class="t">&gt; 8%</td></tr>
+                <tr><td>迟填率（超过截止时间才填的人周占比）</td><td class="t">≤ 10%</td><td class="t">10–25%</td><td class="t">&gt; 25%</td></tr>
+                <tr><td>超填记录数（单周超过 5 天或单日超过 1 天）</td><td class="t">0</td><td class="t">1–5</td><td class="t">&gt; 5</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">P02 人均并发需求</span><span class="chip">P03 有效工时占比</span><span class="chip">P05 填报饱和度</span><span class="chip">E07 分档单位人日</span><span class="chip">Q02 / Q03</span><span class="chip">每月纠偏的实际人日</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">1.3</span><b>填报真实</b><span class="tag">原 V1.3、V3.5</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>模板化满填率（整周挂同一需求且每天恰好 1 天）</td><td class="t">≤ 20%</td><td class="t">20–40%</td><td class="t">&gt; 40%</td></tr>
+                <tr><td>代码交叉校验一致率（报工需求涉及的应用与本人提交 PR 的应用有交集；两侧人员标识先哈希脱敏，结果只出团队级）</td><td class="t">≥ 70%</td><td class="t">50–70%</td><td class="t">&lt; 50%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">P02</span><span class="chip">P03</span><span class="chip">E07</span></div>
+              <div class="cn">模板化满填只是信号：专注做一个需求是正常的，这项用来发现敷衍填报的团队。</div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">1.4</span><b>工时归属</b><span class="tag">原 V3.1–V3.4</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>对未开始、已关闭、已取消需求报工的人日占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>非需求成员报工的人日占比（iSmart 有成员字段时启用）</td><td class="t">≤ 5%</td><td class="t">5–15%</td><td class="t">&gt; 15%</td></tr>
+                <tr><td>挂到"公共 / 杂项"的工时占比</td><td class="t">≤ 10%</td><td class="t">10–20%</td><td class="t">&gt; 20%</td></tr>
+                <tr><td>已上线但零工时的需求占比</td><td class="t">≤ 3%</td><td class="t">3–10%</td><td class="t">&gt; 10%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">P02</span><span class="chip">P03</span><span class="chip">E07</span><span class="chip">A04</span><span class="chip">Q02 / Q03</span></div>
+              <div class="cn">此项为红灯的团队，每月纠偏中的自动上调改为 TL 确认。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② -->
+        <div class="domain">
+          <h4>② 需求数量与状态 <small>交付了多少，交付了没有</small></h4>
+          <div class="checks">
+            <div class="check">
+              <div class="ch"><span class="cid">2.1</span><b>需求完整</b><span class="tag">原 V8.1、V8.4、V4.1、V4.2</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>antom 漏同步率（antom 有、iSmart 无）</td><td class="t">≤ 1%</td><td class="t">1–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>同步失败或延迟超过 24 小时的次数</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+                <tr><td>疑似重复需求占比（同战场标题高度相似且创建时间相近）</td><td class="t">≤ 1%</td><td class="t">1–3%</td><td class="t">&gt; 3%</td></tr>
+                <tr><td>拆单异常次数（同一创建人 7 天内建 5 个以上 XS 需求）</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01 效率指数（分子）</span><span class="chip">E02 吞吐当量</span><span class="chip">E03 上线需求数</span><span class="chip">P01</span><span class="chip">A03</span><span class="chip">A05</span><span class="chip">桥接表</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">2.2</span><b>状态一致</b><span class="tag">原 V8.2、V8.7、V6.1、V6.2</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>antom 与 iSmart 状态冲突率（按状态映射表比对）</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>上线反证率（iSmart 已上线但无发布记录，或有发布记录但未上线）</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>已上线未关单占比（发布 14 天后仍未关闭）</td><td class="t">≤ 5%</td><td class="t">5–15%</td><td class="t">&gt; 15%</td></tr>
+                <tr><td>状态停滞占比（开发中或测试中，但连续 3 周无报工）</td><td class="t">≤ 3%</td><td class="t">3–8%</td><td class="t">&gt; 8%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01</span><span class="chip">E02（上线判定）</span><span class="chip">E04</span><span class="chip">E05</span><span class="chip">P02（在制）</span><span class="chip">桥接表</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">2.3</span><b>归属准确</b><span class="tag">原 V6.3、V6.4</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>战场或模块为空的需求数</td><td class="t">0</td><td class="t">1–5</td><td class="t">&gt; 5</td></tr>
+                <tr><td>需求战场与负责人所属战场不一致的占比</td><td class="t">≤ 5%</td><td class="t">5–10%</td><td class="t">&gt; 10%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">所有分战场指标</span><span class="chip">重点：E01</span><span class="chip">E02</span><span class="chip">E03</span><span class="chip">P01</span><span class="chip">A03</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">2.4</span><b>质量关联</b><span class="tag">新增</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>生产缺陷能关联到需求的比例</td><td class="t">≥ 80%</td><td class="t">60–80%</td><td class="t">&lt; 60%</td></tr>
+                <tr><td>发布回滚记录完整率</td><td class="t">≥ 95%</td><td class="t">80–95%</td><td class="t">&lt; 80%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">G01 缺陷数 / 当量</span><span class="chip">G02 回滚率</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ③ -->
+        <div class="domain">
+          <h4>③ 规模档 <small>每个需求值多少活</small></h4>
+          <div class="checks">
+            <div class="check">
+              <div class="ch"><span class="cid">3.1</span><b>评估完整</b><span class="tag">原 V4.3 部分 + 新增</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>排期需求缺少评估人日的占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>冻结后评估人日被改动、未走重估流程的次数</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+                <tr><td>评估人日极端值占比（为 0 或超过同档 P99）</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01</span><span class="chip">E02</span><span class="chip">P01</span><span class="chip">A03</span><span class="chip">A05</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">3.2</span><b>档位准确</b><span class="tag">新增，即每月纠偏的结果</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>档位一致率（初始档与实际档相同或差一档）</td><td class="t">≥ 85%</td><td class="t">70–85%</td><td class="t">&lt; 70%</td></tr>
+                <tr><td>跨两档及以上的需求占比</td><td class="t">≤ 5%</td><td class="t">5–10%</td><td class="t">&gt; 10%</td></tr>
+                <tr><td>纠偏按时完成率（次月第 5 个工作日前）</td><td class="t">≥ 95%</td><td class="t">80–95%</td><td class="t">&lt; 80%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01</span><span class="chip">E02</span><span class="chip">E07</span><span class="chip">P01</span><span class="chip">A03</span><span class="chip">A05</span></div>
+              <div class="cn">档位一致率用实际人日计算，所以本身依赖 1.2 和 1.4：这两项为红时，3.2 的结果只作参考。</div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">3.3</span><b>漂移监控</b><span class="tag">原 V4.4 + 新增</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>各档占比较基线变化超过 10 个百分点的档数</td><td class="t">0</td><td class="t">1</td><td class="t">≥ 2</td></tr>
+                <tr><td>战场接口变更数趋势与当量趋势连续 3 个月方向相反</td><td class="t">否</td><td class="t">—</td><td class="t">是</td></tr>
+                <tr><td>估算偏差率（实际 ÷ 评估）较自身前 3 个月突变超过 30% 的团队数</td><td class="t">0</td><td class="t">1–2</td><td class="t">&gt; 2</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E01</span><span class="chip">A03</span></div>
+              <div class="cn">此项不直接把指标降为底数级，而是触发"偏保守"或"可能偏高"的提示，并由 PM 团队会同战场架构师抽查。战场接口变更数取自应用发布系统：按应用归属战场汇总当月接口变更数，同一接口同月只计一次，不需要需求与代码关联，可以作为不随估算变化的旁证。</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ④ -->
+        <div class="domain">
+          <h4>④ 时间与排期 <small>什么时候交付的，答应了什么</small></h4>
+          <div class="checks">
+            <div class="check">
+              <div class="ch"><span class="cid">4.1</span><b>里程碑质量</b><span class="tag">原 V2</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>时序违规率（不满足立项 ≤ 评审 ≤ 开发开始 ≤ 提测 ≤ 上线）</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
+                <tr><td>实际日期晚于今天的里程碑数</td><td class="t">0</td><td class="t">1–5</td><td class="t">&gt; 5</td></tr>
+                <tr><td>照抄率（计划日期与实际日期完全相等的需求占比）</td><td class="t">≤ 10%</td><td class="t">10–30%</td><td class="t">&gt; 30%</td></tr>
+                <tr><td>集中补录率（录入时间晚于实际日期 7 天以上）</td><td class="t">≤ 15%</td><td class="t">15–35%</td><td class="t">&gt; 35%</td></tr>
+                <tr><td>上线日与生产发布日相差 3 天以上的占比</td><td class="t">≤ 5%</td><td class="t">5–15%</td><td class="t">&gt; 15%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E04 研发周期</span><span class="chip">E06 计划膨胀率</span><span class="chip">E01（上线月归属）</span><span class="chip">P02（利特尔定律校验）</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">4.2</span><b>排期快照</b><span class="tag">原 V8.3 + 新增</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>月初冻结按时完成</td><td class="t">是</td><td class="t">—</td><td class="t">否</td></tr>
+                <tr><td>冻结后的修改未记为"插入 / 移出"的次数</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+                <tr><td>antom 与 iSmart 排期月不一致的占比</td><td class="t">≤ 3%</td><td class="t">3–10%</td><td class="t">&gt; 10%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">E05 承诺兑现率</span><span class="chip">E06 计划膨胀率</span><span class="chip">桥接表</span><span class="chip">随快照冻结的评估人日（3.1）</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ⑤ -->
+        <div class="domain">
+          <h4>⑤ AI 与成本 <small>AI 用了多少，花了多少</small></h4>
+          <div class="checks">
+            <div class="check">
+              <div class="ch"><span class="cid">5.1</span><b>遥测覆盖</b><span class="tag">原 V7.1、V7.2</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>AI 工具覆盖率（有遥测记录的人 ÷ 在册研发人员）</td><td class="t">≥ 80%</td><td class="t">50–80%</td><td class="t">&lt; 50%</td></tr>
+                <tr><td>会话挂接需求率</td><td class="t">≥ 60%</td><td class="t">30–60%</td><td class="t">&lt; 30%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">A01</span><span class="chip">A02</span><span class="chip">A04</span><span class="chip">A07</span></div>
+            </div>
+            <div class="check">
+              <div class="ch"><span class="cid">5.2</span><b>成本明细</b><span class="tag">原 V7.3 + 新增</span></div>
+              <div class="tw"><table><thead><tr><th>判定项</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead><tbody>
+                <tr><td>Token 明细必填字段完整率</td><td class="t">≥ 95%</td><td class="t">80–95%</td><td class="t">&lt; 80%</td></tr>
+                <tr><td>费用可归属到战场的比例</td><td class="t">≥ 95%</td><td class="t">80–95%</td><td class="t">&lt; 80%</td></tr>
+              </tbody></table></div>
+              <div class="for">保障指标<span class="chip">A05 ¥ / 当量</span><span class="chip">A06 ROI</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.3</span>指标 × 校验对照</h3>
+        <div class="legend"><span><span class="mx"><span class="dot"></span></span> 依赖：红灯时指标降为底数级</span><span><span class="mx"><span class="ring"></span></span> 辅助：红灯时保留结论，但加提示</span></div>
+        <div class="tbl mx" id="matrix"><table>
+          <thead>
+            <tr><th class="rh" rowspan="2">指标</th><th colspan="4" class="dsep">① 人力与工时</th><th colspan="4" class="dsep">② 需求</th><th colspan="3" class="dsep">③ 规模档</th><th colspan="2" class="dsep">④ 时间</th><th colspan="2" class="dsep">⑤ AI</th></tr>
+            <tr><th class="dsep">1.1</th><th>1.2</th><th>1.3</th><th>1.4</th><th class="dsep">2.1</th><th>2.2</th><th>2.3</th><th>2.4</th><th class="dsep">3.1</th><th>3.2</th><th>3.3</th><th class="dsep">4.1</th><th>4.2</th><th class="dsep">5.1</th><th>5.2</th></tr>
+          </thead>
+          <tbody id="mxbody"></tbody>
+        </table></div>
+        <div class="callout"><p><strong>一眼可见的结论：</strong>北极星 E01 不依赖工时明细（1.2–1.4），只依赖名册、需求和规模档；工时治理主要影响人效诊断类指标（P02、P03、E07）。</p></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.4</span>裁决依据</h3>
+        <h4>字段级权威源表</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>字段</th><th>权威源</th></tr></thead>
+          <tbody>
+            <tr><td>需求是否存在、受理状态</td><td>antom 战场：antom；其他战场：iSmart</td></tr>
+            <tr><td>是否上线、上线日</td><td>生产发布记录；关联不到需求时暂用 iSmart 实际上线日并打标记</td></tr>
+            <tr><td>排期月、评估人日</td><td>iSmart 月初冻结快照</td></tr>
+            <tr><td>报工人日</td><td>iSmart</td></tr>
+            <tr><td>在册人员、所属战场</td><td>HR / PMO 名册</td></tr>
+            <tr><td>规模档</td><td>定档结果表（含纠偏记录）</td></tr>
+            <tr><td>AI 费用</td><td>Token 消耗明细（P1 后）</td></tr>
+          </tbody>
+        </table></div>
+        <div class="grid g2">
+          <div class="grid" style="gap:10px">
+            <h4>antom ↔ iSmart 状态映射 <span class="tag">示例，需按实际状态值确认</span></h4>
+            <div class="tbl"><table>
+              <thead><tr><th>antom 状态</th><th>iSmart 状态</th></tr></thead>
+              <tbody>
+                <tr><td>待受理</td><td>新建 / 评审中</td></tr>
+                <tr><td>已受理</td><td>排期中</td></tr>
+                <tr><td>开发中</td><td>开发中</td></tr>
+                <tr><td>测试中</td><td>测试中</td></tr>
+                <tr><td>已上线</td><td>已上线（以发布记录为准）</td></tr>
+                <tr><td>已关闭</td><td>已关闭</td></tr>
+                <tr><td>已取消</td><td>已取消</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+          <div class="grid" style="gap:10px;align-content:start">
+            <h4>状态冲突裁决</h4>
+            <p class="note">以"antom 未受理 / iSmart 已上线"为例：</p>
+            <div class="dtree">
+              <div class="node">查生产发布记录</div>
+              <div class="kids">
+                <div class="kid"><b>有记录</b>判定为"已上线"，antom 状态滞后 → 通知 antom 战场接口人更新</div>
+                <div class="kid"><b>无记录</b>判定为"未上线"，iSmart 状态错误 → 通知 iSmart 需求负责人更正</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.5</span>个人数据使用规范</h3>
+        <p class="note">涉及个人级数据的环节：校验 1.1–1.4 的计算过程、P02 的计算过程。</p>
+        <ul class="dots">
+          <li><b>最小必要</b>：只取校验所需字段。</li>
+          <li><b>匿名聚合</b>：看板和报告只出战场 / 团队级汇总。</li>
+          <li><b>不进 KPI</b>：校验结果不用于个人绩效评价。</li>
+          <li><b>访问控制</b>：个人级明细只对数据治理负责人开放，访问需审批并留痕。</li>
+          <li><b>代码提交</b>：只取需求号、仓库、应用，不取提交人；唯一例外是 1.3 代码交叉校验，两侧人员标识先哈希脱敏，结果只出团队级。</li>
+          <li><b>AI 会话</b>：只取统计特征，不取对话原文。</li>
+        </ul>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">6.6</span>存量腐化治理</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>腐化表现</th><th>根因</th><th>对策</th><th>对应校验</th><th>优先级</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">antom 漏同步</td><td>同步链路无对账、无监控</td><td>每日存在性对账；同步失败告警；漏单清单闭环到战场接口人；近 12 个月存量一次性清理</td><td class="mono">2.1</td><td><span class="pill p0">P0</span></td></tr>
+            <tr><td class="nowrap">状态冲突</td><td>无字段级权威源、无状态映射</td><td>权威源表 + 状态映射表；"上线"以发布记录为准</td><td class="mono">2.2</td><td><span class="pill p0">P0</span></td></tr>
+            <tr><td class="nowrap">需求数不准</td><td>漏同步 + 重复 + 拆单</td><td>对账补齐；吞吐改用当量，削弱拆单影响</td><td class="mono">2.1</td><td><span class="pill p0">P0</span></td></tr>
+            <tr><td class="nowrap">定档不准</td><td>研发自填人日</td><td>预估工作量定档 + 每月纠偏 + 漂移监控</td><td class="mono nowrap">3.1–3.3</td><td><span class="pill rd-b">P1</span></td></tr>
+            <tr><td class="nowrap">工时不准</td><td>敷衍填报、挂错需求</td><td>工时四项校验治理；北极星改用名册人日，降低对工时明细的依赖</td><td class="mono nowrap">1.2–1.4</td><td><span class="pill rd-b">P1</span></td></tr>
+            <tr><td class="nowrap">看板口径混乱</td><td>同名不同义、僵尸指标</td><td>盘点后按四象限处置</td><td>—</td><td><span class="pill rd-b">P1</span></td></tr>
+          </tbody>
+        </table></div>
+        <h4>antom 同步治理</h4>
+        <p class="lead">每日全量比对需求清单和状态；每周比对战场、里程碑、排期月；接口失败或超过 24 小时未同步即告警。异常按以下流程闭环：</p>
+        <div class="pipe"><span>生成异常清单</span><i>→</i><span>推送 antom 战场接口人</span><i>→</i><span>修复</span><i>→</i><span>次日对账确认关闭</span></div>
+        <h4>存量看板盘点</h4>
+        <p class="lead">每个现有看板、报表、指标登记名称、位置、使用方、口径、来源、最后更新时间、维护人、可信度、与新体系的对应关系，再按四象限处置：</p>
+        <div class="quad">
+          <div></div><div class="qh">使用频度低</div><div class="qh">使用频度高</div>
+          <div class="qh">可信度高</div>
+          <div class="qc"><b>合并</b><span>合并到新口径，旧的下线</span></div>
+          <div class="qc keep"><b>保留</b><span>纳入指标字典统一管理</span></div>
+          <div class="qh">可信度低</div>
+          <div class="qc drop"><b>下线</b><span>直接下线</span></div>
+          <div class="qc"><b>重建</b><span>按新口径重建，并行一个月后旧的下线</span></div>
+        </div>
+        <p class="lead">新体系的指标上线时，被它替代的旧指标必须同步下线，避免两套数打架。</p>
+        <p class="lead"><b>常态机制：</b>指标字典是唯一的口径来源；每个指标、每项校验都有维护人；能在 iSmart 录入时拦住的问题（必填项、状态流转、里程碑时序），不留到事后清洗；口径变更需提交变更说明，经 PM 团队评审后更新方案文档和指标字典，并在月报中公告。</p>
+      </div>
+    </section>
+
+    <!-- ============ 第七部分 ============ -->
+    <section class="part" id="p7">
+      <div class="part-head">
+        <div class="part-no">第七部分</div>
+        <h2>展示与运营</h2>
+        <p>三层看板让不同的人看到自己需要的东西；桥接表回答"两个数为什么对不上"；运营节奏让这一切按月转起来。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.1</span>三层读法</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>层</th><th>读者</th><th>内容</th><th>刷新</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><b>L1</b> 一页纸</td><td>CIO 及所有人</td><td>5 个数 + 护栏 + 红黄绿 + 一句话结论</td><td class="nowrap">月度</td></tr>
+            <tr><td class="nowrap"><b>L2</b> 战场页</td><td>战场负责人、业务方</td><td>双口径与桥接表、分档下钻、本战场异常清单</td><td class="nowrap">月度（异常清单每周）</td></tr>
+            <tr><td class="nowrap"><b>L3</b> 口径与明细</td><td>PM 团队、数据团队</td><td>指标卡、校验明细、纠偏记录、算例</td><td class="nowrap">随时</td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">所有层最细到"战场 × 团队 × 周"，不出个人。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.2</span>L1 一页纸</h3>
+        <p class="lead">顶部 5 个数 + 护栏；中部四战场矩阵（每格 = 数值 + 红黄绿 + 环比箭头 + 就绪标签）；底部一句话结论。</p>
+        <h4>红黄绿规则 <span class="tag">初始值，运行一个季度后校准</span></h4>
+        <div class="tbl"><table>
+          <thead><tr><th>指标</th><th><span class="lv g"><i></i>绿</span></th><th><span class="lv y"><i></i>黄</span></th><th><span class="lv r"><i></i>红</span></th></tr></thead>
+          <tbody>
+            <tr><td>E01 效率指数</td><td>≥ 1.05</td><td>0.95–1.05</td><td>&lt; 0.95</td></tr>
+            <tr><td>A03 等效人力</td><td>≥ 同期数马减少人数</td><td>减少人数的 50%–100%</td><td>&lt; 50%</td></tr>
+            <tr><td>P01 人均吞吐当量</td><td>较基线 ≥ +5%</td><td>较基线 −5% 至 +5%</td><td>较基线 &lt; −5%</td></tr>
+            <tr><td>Q01 数据校验达标率</td><td>≥ 90%</td><td>70%–90%</td><td>&lt; 70%</td></tr>
+            <tr><td>A05 ¥ / 当量</td><td>较上期下降或持平</td><td>上升 ≤ 20%</td><td>上升 &gt; 20%</td></tr>
+            <tr><td>G01 缺陷 / 当量</td><td>较基线持平或下降</td><td>恶化 ≤ 20%</td><td>恶化 &gt; 20%</td></tr>
+          </tbody>
+        </table></div>
+        <h4>覆盖规则</h4>
+        <ul class="dots">
+          <li>G01 为红时，该战场 E01 一律显示为黄，不论数值多高。</li>
+          <li>底数级指标不显示红黄绿，只显示数值和"底数"标签。</li>
+          <li>校验 3.3 触发时，E01、A03 旁显示"偏保守"或"可能偏高"。</li>
+        </ul>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.3</span>L2 战场页</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>区块</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">五个数</td><td>与 L1 相同，加近 12 个月趋势</td></tr>
+            <tr><td class="nowrap">双口径与桥接表</td><td>本月桥接表 + 承诺口径分批跟踪</td></tr>
+            <tr><td class="nowrap">分档下钻</td><td>各档吞吐当量、研发周期 P50 / P85、单位人日</td></tr>
+            <tr><td class="nowrap">人效</td><td>人均并发需求 + 利特尔定律校验、有效工时占比、资源结构</td></tr>
+            <tr><td class="nowrap">AI 效能</td><td>覆盖率、挂接率、¥ / 当量、无效会话占比</td></tr>
+            <tr><td class="nowrap">规模档</td><td>档位分布对比基线、档位一致率、本月纠偏清单</td></tr>
+            <tr><td class="nowrap">数据质量</td><td>本战场 15 项校验红黄绿 + 异常清单 Top 10</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.4</span>双口径与月度桥接表</h3>
+        <p class="lead">业务方月初拍排期，看的是"当月排的当月交了多少"；效能分析看的是"当月上线了多少"。跨月需求让两个数天然对不上。两个口径都保留，每月一张桥接表把差额拆清楚。</p>
+        <pre class="block">存量方程：
+月初在制 + 本月新排期 + 计划外插入 − 本月上线 − 取消/移出 = 月末在制
+
+上线拆分：
+本月上线（产出口径）= ① 本月排期且本月上线    ← 战场的"当月吞吐"
+                    + ② 往月排期、本月上线    ← 跨月滚入
+                    + ③ 计划外插入、本月上线</pre>
+
+        <div class="viz">
+          <div class="viz-title"><h4>两个数为什么对不上</h4>
+            <div class="seg-tabs" role="group" aria-label="选择月份">
+              <button type="button" id="bm1" data-m="1" aria-pressed="false">第 1 月</button>
+              <button type="button" id="bm2" data-m="2" aria-pressed="true">第 2 月</button>
+              <button type="button" id="bm3" data-m="3" aria-pressed="false">第 3 月</button>
+            </div>
+          </div>
+          <div class="key">
+            <span><i style="background:var(--s1)"></i>① 本月排期、本月上线</span>
+            <span><i style="background:var(--s2)"></i>② 往月排期、本月上线</span>
+            <span><i style="background:var(--s3)"></i>③ 计划外插入、本月上线</span>
+            <span><i style="background:var(--ref)"></i>本月排期、未在本月上线</span>
+          </div>
+          <div class="hbars" id="bridge"></div>
+          <div class="hint" id="bridgeHint"></div>
+          <div class="stock" id="bridgeStock"></div>
+          <span class="sample">示例：虚拟战场 A，单位：需求个数</span>
+        </div>
+
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th class="num">第 1 月</th><th class="num">第 2 月</th><th class="num">第 3 月</th></tr></thead>
+          <tbody>
+            <tr><td>月初在制</td><td class="num">30</td><td class="num">30</td><td class="num">27</td></tr>
+            <tr><td>+ 本月新排期</td><td class="num">40</td><td class="num">38</td><td class="num">42</td></tr>
+            <tr><td>+ 计划外插入</td><td class="num">5</td><td class="num">6</td><td class="num">4</td></tr>
+            <tr><td>− 本月上线</td><td class="num">42</td><td class="num">45</td><td class="num">44</td></tr>
+            <tr><td>− 取消 / 移出</td><td class="num">3</td><td class="num">2</td><td class="num">4</td></tr>
+            <tr class="tot"><td>= 月末在制</td><td class="num">30</td><td class="num">27</td><td class="num">25</td></tr>
+            <tr><td>① 本月排期本月上线</td><td class="num">28</td><td class="num">26</td><td class="num">30</td></tr>
+            <tr><td>② 往月排期本月上线</td><td class="num">11</td><td class="num">15</td><td class="num">12</td></tr>
+            <tr><td>③ 计划外插入本月上线</td><td class="num">3</td><td class="num">4</td><td class="num">2</td></tr>
+            <tr class="tot"><td>当月兑现率（① ÷ 本月新排期）</td><td class="num">70.0%</td><td class="num">68.4%</td><td class="num">71.4%</td></tr>
+          </tbody>
+        </table></div>
+
+        <h4>承诺口径分批跟踪</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>排期月</th><th class="num">应交池</th><th>当月兑现</th><th>M+1 累计</th><th>M+2 累计</th></tr></thead>
+          <tbody>
+            <tr><td>第 1 月</td><td class="num">40</td><td><div class="prog"><div class="t"><i style="width:70%"></i></div><span>28（70.0%）</span></div></td><td><div class="prog"><div class="t"><i style="width:92.5%"></i></div><span>37（92.5%）</span></div></td><td><div class="prog"><div class="t"><i style="width:97.5%"></i></div><span>39（97.5%）</span></div></td></tr>
+            <tr><td>第 2 月</td><td class="num">38</td><td><div class="prog"><div class="t"><i style="width:68.4%"></i></div><span>26（68.4%）</span></div></td><td><div class="prog"><div class="t"><i style="width:94.7%"></i></div><span>36（94.7%）</span></div></td><td>—</td></tr>
+            <tr><td>第 3 月</td><td class="num">42</td><td><div class="prog"><div class="t"><i style="width:71.4%"></i></div><span>30（71.4%）</span></div></td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">第 2 月的跨月滚入 15 个中，9 个来自第 1 月排期，6 个来自更早；第 3 月的 12 个中，2 个来自第 1 月，10 个来自第 2 月。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.5</span>跨战场比较</h3>
+        <ol class="nums">
+          <li><b>比趋势不比绝对值</b>：每个战场以自己的基线期为 1.00。</li>
+          <li><b>看定档提示</b>：校验 3.3 触发的战场，比较时加注。</li>
+          <li><b>数据质量不同要标注</b>：依赖校验为红的指标降为底数级，不参与排名。</li>
+        </ol>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.6</span>运营节奏</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>频率</th><th>动作</th><th>参与方</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">每日</td><td>antom 对账；同步失败告警</td><td>数据团队（自动）</td></tr>
+            <tr><td class="nowrap">每周</td><td>15 项校验运行；异常清单推送</td><td>数据团队、战场接口人</td></tr>
+            <tr><td class="nowrap">每月</td><td>月末生成纠偏清单；第 3 个工作日排期冻结；第 5 个工作日完成纠偏确认；第 7 个工作日发布月报并复盘</td><td>PM 团队、TL、各战场负责人</td></tr>
+            <tr><td class="nowrap">每季度</td><td>档位漂移与估算偏差复盘；红黄绿阈值与指标评审</td><td>PM 团队、战场架构师、数据团队</td></tr>
+            <tr><td class="nowrap">每年</td><td>档位阈值、权重、k 值复核</td><td>PM 团队、数据团队</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ 第八部分 ============ -->
+    <section class="part" id="p8">
+      <div class="part-head">
+        <div class="part-no">第八部分</div>
+        <h2>落地路线</h2>
+        <p>四个阶段，每个工作项都有产出和验收标准。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">8.1</span>分阶段计划</h3>
+        <h4>P0 摸底与止血 <span class="tag">约 2–4 周</span></h4>
+        <div class="tbl"><table>
+          <thead><tr><th>工作项</th><th>产出</th><th>验收标准</th></tr></thead>
+          <tbody>
+            <tr><td>跑 15 项校验底数</td><td>数据质量基线报告（分战场）</td><td>每项都有底数，阈值按实际分布校准一次</td></tr>
+            <tr><td>确认基线期，校准档位阈值、档位权重、k 值</td><td>定档参数表</td><td>基线期效率指数 = 1.00</td></tr>
+            <tr><td>字段级权威源表、antom 状态映射表</td><td>两表定稿</td><td>相关系统负责人确认</td></tr>
+            <tr><td>antom 同步对账与存量清理</td><td>漏单清单、冲突清单</td><td>2.1、2.2 有底数，存量有处理计划</td></tr>
+            <tr><td>iSmart 月初排期冻结快照（含评估人日）</td><td>iSmart 需求上线</td><td>首次冻结成功</td></tr>
+            <tr><td>线上质量最小集</td><td>缺陷关联需求的采集方案</td><td>2.4 可出底数</td></tr>
+            <tr><td>存量看板盘点</td><td>盘点表</td><td>每个看板都有四象限归类</td></tr>
+          </tbody>
+        </table></div>
+        <h4>P1 首版账本 <span class="tag">约 4–6 周</span></h4>
+        <div class="tbl"><table>
+          <thead><tr><th>工作项</th><th>产出</th><th>验收标准</th></tr></thead>
+          <tbody>
+            <tr><td>效率指数 v1</td><td>各战场 E01、A03</td><td>标注"预估定档"；基线期 = 1.00</td></tr>
+            <tr><td>每月纠偏首轮运行</td><td>纠偏清单、Q02、Q03</td><td>按时间表完成</td></tr>
+            <tr><td>双口径与桥接表</td><td>各战场月度桥接表、分批跟踪表</td><td>存量方程平衡；① + ② + ③ = 当月上线</td></tr>
+            <tr><td>数据质量看板</td><td>15 项校验红黄绿、异常清单</td><td>每周自动运行</td></tr>
+            <tr><td>L1、L2 v1</td><td>首期月报</td><td>所有指标标注就绪等级</td></tr>
+            <tr><td>旧指标首批下线</td><td>下线清单</td><td>使用方已通知</td></tr>
+            <tr><td>Token 明细标准方案</td><td>字段标准与采集方案</td><td>AI 工具方确认</td></tr>
+          </tbody>
+        </table></div>
+        <h4>P2 稳定运行 <span class="tag">约 1–2 个季度</span></h4>
+        <div class="tbl"><table>
+          <thead><tr><th>工作项</th><th>产出</th><th>验收标准</th></tr></thead>
+          <tbody>
+            <tr><td>纠偏常态化、季度漂移复盘</td><td>季度复盘报告</td><td>3.2 连续 3 个月为绿</td></tr>
+            <tr><td>工时治理</td><td>1.2–1.4 转绿</td><td>P02、P03 升为结论级</td></tr>
+            <tr><td>里程碑治理</td><td>4.1 转绿</td><td>E04 升为结论级</td></tr>
+            <tr><td>质量护栏上线</td><td>G01、G02</td><td>能按战场出数</td></tr>
+          </tbody>
+        </table></div>
+        <h4>P3 AI 账本与远期议题</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>工作项</th><th>产出</th><th>验收标准</th></tr></thead>
+          <tbody>
+            <tr><td>Token 明细上线</td><td>标准化 Token 明细</td><td>5.2 为绿；A05、A06 升为结论级</td></tr>
+            <tr><td>采纳埋点</td><td>AI 产出采纳 / 留存数据</td><td>A08 出数</td></tr>
+            <tr><td>修改点定档评估</td><td>是否启动的决策（见第九部分）</td><td>满足启动条件时立项验证</td></tr>
+            <tr><td>P2 优先级数据</td><td>业务需求池、环境等待、业务验收</td><td>按需推进</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">8.2</span>外部依赖</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>依赖</th><th>提供方</th><th>用于</th><th>阶段</th></tr></thead>
+          <tbody>
+            <tr><td>iSmart 月初排期冻结快照（含评估人日）</td><td>iSmart 产品团队</td><td>定档、承诺口径、桥接表</td><td class="nowrap">P0</td></tr>
+            <tr><td>HR / PMO 名册月表（含入离职、裁撤日期）</td><td>HR / PMO</td><td>名册可用人日、校验 1.1</td><td class="nowrap">P0</td></tr>
+            <tr><td>antom 同步接口数据</td><td>antom 战场</td><td>校验 2.1、2.2、4.2</td><td class="nowrap">P0</td></tr>
+            <tr><td>发布系统数据（应用、接口、发布日期、回滚，应用归属战场）</td><td>发布系统负责团队</td><td>上线判定、校验 2.2、2.4、3.3</td><td class="nowrap">P0</td></tr>
+            <tr><td>线上缺陷数据</td><td>质量 / 运维团队</td><td>G01</td><td class="nowrap">P0–P2</td></tr>
+            <tr><td>AI 工具遥测与 Token 消耗数据</td><td>AI 研发工具团队</td><td>校验 5.1、5.2，AI 效能指标</td><td class="nowrap">P1–P3</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">8.3</span>角色分工</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>角色</th><th>职责</th><th>对现有工作的影响</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">PM 团队</td><td>体系负责人：口径与指标字典、主持每月纠偏、月报、变更评审</td><td>体系运营</td></tr>
+            <tr><td class="nowrap">数据团队</td><td>数据接入、校验运行、纠偏清单生成、看板开发</td><td>开发与运维</td></tr>
+            <tr><td class="nowrap">战场接口人</td><td>接收异常清单、推动修复</td><td>异常处理</td></tr>
+            <tr><td class="nowrap">战场架构师</td><td>校验 3.3 触发时参与抽查</td><td>按需</td></tr>
+            <tr><td class="nowrap">研发 TL</td><td>沿用：排期时填评估人日；新增：每月少量例外确认（不处理按默认规则）</td><td>很小</td></tr>
+            <tr><td class="nowrap">研发人员</td><td>沿用：报工</td><td>无</td></tr>
+            <tr><td class="nowrap">HR / PMO</td><td>按月提供名册</td><td>无（已有月表）</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">8.4</span>风险与应对</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>风险</th><th>影响</th><th>应对</th></tr></thead>
+          <tbody>
+            <tr><td>评估人日随 AI 整体下漂</td><td>效率被低估</td><td>校验 3.3 监控并提示"偏保守"；长期看第九部分修改点定档</td></tr>
+            <tr><td>故意估高</td><td>效率被高估</td><td>估算偏差率按团队公示；突变时抽查</td></tr>
+            <tr><td>工时不准导致误纠偏</td><td>档位失真</td><td>1.4 为红的团队，自动上调改为 TL 确认</td></tr>
+            <tr><td>TL 不处理例外确认</td><td>纠偏不完整</td><td>默认规则兜底：上调自动生效，下调不处理即保持原档</td></tr>
+            <tr><td>效率指数被误读为"AI 全部贡献"</td><td>结论失真</td><td>统一归因措辞；同时展示对照法结果</td></tr>
+            <tr><td>指标被用于个人考核</td><td>数据失真、填报抵触</td><td>红线写入方案；看板不出个人数据</td></tr>
+            <tr><td>新旧两套数并存</td><td>口径打架</td><td>新指标上线即下线旧指标；指标字典为唯一口径源</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ 第九部分 ============ -->
+    <section class="part" id="p9">
+      <div class="part-head">
+        <div class="part-no">第九部分</div>
+        <h2>待讨论议题</h2>
+        <p>以下议题不影响当前方案落地，作为后续讨论的输入。</p>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">9.1</span>修改点定档（远期方向）</h3>
+        <p class="lead"><b>思路：</b>按需求"要改什么"定档，而不是"要花多少人日"。AI 能让人做得更快，但改变不了需求要动几个系统，所以这种定档不随效能漂移。</p>
+        <div class="grid g2">
+          <div class="tbl"><table>
+            <thead><tr><th>修改点</th><th class="num">示意权重</th><th class="num">例：授信申请流程</th><th class="num">得分</th></tr></thead>
+            <tbody>
+              <tr><td>涉及系统数</td><td class="num">×5</td><td class="num">3</td><td class="num">15</td></tr>
+              <tr><td>接口变更数</td><td class="num">×2</td><td class="num">4</td><td class="num">8</td></tr>
+              <tr><td>页面 / 交互数</td><td class="num">×1</td><td class="num">5</td><td class="num">5</td></tr>
+              <tr><td>外部协同方数</td><td class="num">×3</td><td class="num">1</td><td class="num">3</td></tr>
+              <tr><td>是否新业务</td><td class="num">是 = +5</td><td class="num">是</td><td class="num">5</td></tr>
+              <tr class="tot"><td>合计</td><td class="num"></td><td class="num"></td><td class="num">36 → M</td></tr>
+            </tbody>
+          </table></div>
+          <div class="tbl"><table>
+            <thead><tr><th>讨论过的实现路径</th><th>结论</th></tr></thead>
+            <tbody>
+              <tr><td>研发 TL 填写修改点</td><td>推行不了</td></tr>
+              <tr><td>从发布记录自动采集（需求 → PR → 应用）</td><td>需求与代码关联靠 PR message，非强制，覆盖不足</td></tr>
+              <tr><td>PM 填写修改点</td><td>PM 缺少判断需求复杂度的能力</td></tr>
+              <tr><td>大模型读需求文档 + 战场知识库</td><td>可行性最高，但要各战场架构师建设知识库，且需求文档质量参差</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <p class="lead"><b>难点：</b>知识库建设工作量大；需求文档质量参差；需求与代码变更的关联弱。</p>
+        <div class="callout">
+          <p><strong>建议：作为远期方向，满足以下任一条件时启动可行性验证。</strong></p>
+          <ol class="nums">
+            <li>校验 3.3 连续两个季度提示明显下漂；</li>
+            <li>业务方或管理层对预估定档的结果提出质疑；</li>
+            <li>各战场因 AI 研发工具需要，已经建成产品知识库。</li>
+          </ol>
+          <p>启动后先在一个战场与预估定档双轨对比 2–3 个月，再决定是否替换。现方案的档位权重、k 值、纠偏流程都可以沿用，修改点定档只替换"初始档"的来源。</p>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">9.2</span>其他待确认事项</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>事项</th><th>负责</th><th>写入位置</th></tr></thead>
+          <tbody>
+            <tr><td>基线期起止月份</td><td>PM 团队</td><td class="mono">2.5</td></tr>
+            <tr><td>档位阈值、档位权重（用基线期数据计算）</td><td>数据团队</td><td class="mono">3.2、3.3</td></tr>
+            <tr><td>antom / iSmart 实际状态值</td><td>antom 战场、iSmart 产品团队</td><td class="mono">6.4</td></tr>
+            <tr><td>数马人日单价</td><td>PMO</td><td class="mono">5.4</td></tr>
+            <tr><td>各校验阈值（P0 后校准）</td><td>数据团队</td><td class="mono">6.2</td></tr>
+            <tr><td>故意估高的处理方式：只公示，还是纳入团队复盘</td><td>PM 团队</td><td class="mono">3.5</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ============ 总结 ============ -->
+    <section class="part" id="summary">
+      <div class="part-head">
+        <div class="part-no">总结</div>
+        <h2>回到五个问题</h2>
+      </div>
+      <div class="tbl"><table>
+        <thead><tr><th>问题</th><th>答案看哪里</th><th>靠什么保障</th><th>什么时候能下结论</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><b>效率怎么样</b></td><td>E01 效率指数（E02、E04 辅助）</td><td>1.1 名册、2.1–2.3 需求、3.1–3.2 规模档</td><td>P1 起（标注"预估定档"）</td></tr>
+          <tr><td class="nowrap"><b>AI 顶了多少</b></td><td>A03 等效人力（A04 佐证）</td><td>同 E01</td><td>P1 起</td></tr>
+          <tr><td class="nowrap"><b>人有没有被喂饱</b></td><td>P01 人均吞吐当量 + P02 人均并发</td><td>P01 同 E01；P02 另需 1.2–1.4 工时</td><td>P01 在 P1 起；P02 待工时治理转绿（P2）</td></tr>
+          <tr><td class="nowrap"><b>数据能不能信</b></td><td>Q01 校验达标率、Q02 档位一致率</td><td>15 项校验本身</td><td>P0 出底数，P1 起常态运行</td></tr>
+          <tr><td class="nowrap"><b>AI 的效率如何</b></td><td>A05 ¥ / 当量、A06 ROI</td><td>5.2 成本明细</td><td>Token 明细上线后（P3）</td></tr>
+          <tr><td class="nowrap"><b>护栏</b></td><td>G01 缺陷 / 当量</td><td>2.4 质量关联</td><td>补建后（P2）</td></tr>
+        </tbody>
+      </table></div>
+
+      <div class="sec">
+        <h3>三句话</h3>
+        <div class="three">
+          <div class="s3"><div class="k">一</div><p><b>分母用名册、分子用档位当量</b>，北极星不依赖最脏的工时明细。</p></div>
+          <div class="s3"><div class="k">二</div><p><b>预估工作量定档、每月按"只上调、不轻易下调"纠偏</b>，在零新增填报的前提下让档位尽量接近真实，又不把 AI 提效纠掉。</p></div>
+          <div class="s3"><div class="k">三</div><p><b>五域校验加数据门禁</b>，控制每个结论的强弱，边度量边治理。</p></div>
+        </div>
+      </div>
+
+      <div class="callout"><p><strong>下一步：启动 P0。</strong>确认基线期，跑 15 项校验底数，向 iSmart 提排期冻结快照需求，完成 antom 对账。</p></div>
+    </section>
+
+    <!-- ============ 附录 ============ -->
+    <section class="part" id="appendix">
+      <div class="part-head">
+        <div class="part-no">附录</div>
+        <h2>术语表与编号对照</h2>
+      </div>
+      <div class="sec">
+        <h3>A 术语表</h3>
+        <dl class="gloss">
+          <div><dt>评估人日</dt><dd>TL 排期时填写的预估工作量，定档依据</dd></div>
+          <div><dt>初始档</dt><dd>按评估人日定出、随月初快照冻结的档位</dd></div>
+          <div><dt>实际档</dt><dd>按上线后实际报工人日落入的档位，只用于纠偏判断</dd></div>
+          <div><dt>每月纠偏</dt><dd>上线后比对初始档与实际档，按"只上调、不轻易下调"规则修正档位</dd></div>
+          <div><dt>档位权重</dt><dd>基线期该档上线需求实际人日的中位数，冻结</dd></div>
+          <div><dt>k 值</dt><dd>换算系数，使基线期效率指数等于 1.00</dd></div>
+          <div><dt>需求当量</dt><dd>档位权重 × k，单位是基线等价人日</dd></div>
+          <div><dt>名册可用人日</dt><dd>Σ 每人每月在册工作日</dd></div>
+          <div><dt>效率指数</dt><dd>Σ 上线需求当量 ÷ Σ 名册可用人日</dd></div>
+          <div><dt>提效人日</dt><dd>Σ 当量 − Σ 名册可用人日</dd></div>
+          <div><dt>等效人力</dt><dd>月均提效人日 ÷ 月工作日</dd></div>
+          <div><dt>估算偏差率</dt><dd>实际人日 ÷ 评估人日</dd></div>
+          <div><dt>应交池</dt><dd>月初排期冻结快照中的需求集合</dd></div>
+          <div><dt>在制</dt><dd>已排期或已插入、尚未上线也未取消的需求</dd></div>
+          <div><dt>桥接表</dt><dd>每月把承诺口径和产出口径对齐的存量 / 流量表</dd></div>
+          <div><dt>就绪等级</dt><dd>结论级 / 底数级 / 不出</dd></div>
+          <div><dt>修改点定档</dt><dd>按需求要改的系统、接口、页面等定档（待讨论）</dd></div>
+        </dl>
+      </div>
+      <div class="sec">
+        <h3>B 指标字典</h3>
+        <p class="lead">25 个指标的结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>，可以直接用 Excel 打开。</p>
+      </div>
+      <div class="sec">
+        <h3>C 原 V1–V8 编号对照</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>原编号</th><th>原含义</th><th>现归属</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">V1</td><td>工时填报完整性</td><td>1.2 填报完整、1.3 填报真实</td></tr>
+            <tr><td class="mono">V2</td><td>里程碑质量</td><td>4.1 里程碑质量</td></tr>
+            <tr><td class="mono">V3</td><td>工时挂对需求</td><td>1.4 工时归属、1.3 填报真实（代码交叉校验）</td></tr>
+            <tr><td class="mono">V4</td><td>需求数与规模档</td><td>2.1 需求完整（重复、拆单）、3.1 评估完整、3.3 漂移监控</td></tr>
+            <tr><td class="mono">V5</td><td>资源池对账</td><td>1.1 名册对账</td></tr>
+            <tr><td class="mono">V6</td><td>需求状态与归属</td><td>2.2 状态一致、2.3 归属准确</td></tr>
+            <tr><td class="mono">V7</td><td>AI 遥测</td><td>5.1 遥测覆盖、5.2 成本明细</td></tr>
+            <tr><td class="mono">V8</td><td>跨系统一致性</td><td>2.1（漏同步）、2.2（状态冲突、上线反证）、4.2（排期月一致）</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <span>本页由仓库中的 docs/研发数据体系方案.md 生成，内容以该文档为准</span>
+      <span>v1.1 · 2026-10-17</span>
+    </footer>
+  </main>
+</div>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script>
+(function(){
+  /* 指标 × 校验矩阵：D = 依赖，A = 辅助 */
+  var COLS=["1.1","1.2","1.3","1.4","2.1","2.2","2.3","2.4","3.1","3.2","3.3","4.1","4.2","5.1","5.2"];
+  var SEP={"1.1":1,"2.1":1,"3.1":1,"4.1":1,"5.1":1};
+  var ROWS=[
+    ["E01 效率指数",{D:"1.1 2.1 2.2 2.3 3.1 3.2",A:"3.3 4.1"}],
+    ["E02 吞吐当量",{D:"2.1 2.2 2.3 3.1 3.2",A:"3.3"}],
+    ["E03 上线需求数",{D:"2.1 2.3"}],
+    ["E04 研发周期",{D:"4.1",A:"2.2"}],
+    ["E05 承诺兑现率",{D:"2.2 4.2"}],
+    ["E06 计划膨胀率",{D:"4.2",A:"4.1"}],
+    ["E07 分档单位人日",{D:"1.2 1.3 1.4 3.2"}],
+    ["P01 人均吞吐当量",{D:"1.1 2.1 2.3 3.1 3.2"}],
+    ["P02 人均并发需求",{D:"1.2 1.3 1.4 2.2",A:"4.1"}],
+    ["P03 有效工时占比",{D:"1.2 1.3 1.4"}],
+    ["P04 资源结构",{D:"1.1"}],
+    ["P05 填报饱和度",{D:"1.1 1.2"}],
+    ["A01 AI 覆盖率",{D:"5.1"}],
+    ["A02 会话挂接率",{D:"5.1"}],
+    ["A03 等效人力",{D:"1.1 2.1 2.2 2.3 3.1 3.2",A:"3.3"}],
+    ["A04 对照法",{D:"1.4 5.1",A:"3.2"}],
+    ["A05 ¥ / 当量",{D:"2.1 3.1 3.2 5.2"}],
+    ["A06 ROI",{D:"5.2",A:"1.1 3.2"}],
+    ["A07 无效会话占比",{D:"5.1"}],
+    ["Q02 / Q03",{D:"1.2 1.4"}],
+    ["G01 缺陷 / 当量",{D:"2.4",A:"2.2"}],
+    ["G02 回滚率",{D:"2.4"}]
+  ];
+  var body=document.getElementById("mxbody"), html="";
+  ROWS.forEach(function(r){
+    var d=(r[1].D||"").split(" "), a=(r[1].A||"").split(" ");
+    html+='<tr><td class="rh">'+r[0]+'</td>';
+    COLS.forEach(function(c,i){
+      var cls=SEP[c]?' class="dsep"':'';
+      var cell=d.indexOf(c)>-1?'<span class="dot" aria-label="依赖"></span>':(a.indexOf(c)>-1?'<span class="ring" aria-label="辅助"></span>':'');
+      html+='<td data-c="'+i+'"'+cls+'>'+cell+'</td>';
+    });
+    html+='</tr>';
+  });
+  body.innerHTML=html;
+  var mx=document.getElementById("matrix");
+  function clearCol(){mx.querySelectorAll(".colhi").forEach(function(e){e.classList.remove("colhi")})}
+  mx.addEventListener("mouseover",function(e){
+    var td=e.target.closest("td[data-c]"); clearCol(); if(!td) return;
+    var c=td.getAttribute("data-c");
+    mx.querySelectorAll('td[data-c="'+c+'"]').forEach(function(x){x.classList.add("colhi")});
+  });
+  mx.addEventListener("mouseleave",clearCol);
+
+  /* 提示框 */
+  var tip=document.getElementById("tip");
+  function showTip(el,x,y){tip.textContent=el.getAttribute("data-tip");tip.hidden=false;
+    var w=tip.offsetWidth,h=tip.offsetHeight,vw=window.innerWidth;
+    var left=Math.min(Math.max(8,x-w/2),vw-w-8), top=y-h-12; if(top<8) top=y+16;
+    tip.style.left=left+"px"; tip.style.top=top+"px";}
+  function hideTip(){tip.hidden=true}
+  document.addEventListener("mousemove",function(e){var el=e.target.closest("[data-tip]"); if(el) showTip(el,e.clientX,e.clientY); else hideTip();});
+  document.addEventListener("focusin",function(e){var el=e.target.closest("[data-tip]"); if(el){var r=el.getBoundingClientRect(); showTip(el,r.left+r.width/2,r.top);}});
+  document.addEventListener("focusout",hideTip);
+  window.addEventListener("scroll",hideTip,{passive:true});
+
+  /* 桥接图 */
+  var BR={
+    1:{w0:30,plan:40,ins:5,rel:42,cancel:3,w1:30,a:28,b:11,c:3},
+    2:{w0:30,plan:38,ins:6,rel:45,cancel:2,w1:27,a:26,b:15,c:4},
+    3:{w0:27,plan:42,ins:4,rel:44,cancel:4,w1:25,a:30,b:12,c:2}
+  };
+  var MAX=50;
+  function seg(v,cls,tipText,label){return '<div class="s '+cls+'" style="width:'+(v/MAX*100)+'%" data-tip="'+tipText+'" tabindex="0">'+(v>=3?label:'')+'</div>';}
+  function render(m){
+    var d=BR[m], rate=(d.a/d.plan*100).toFixed(1);
+    document.getElementById("bridge").innerHTML=
+      '<div class="hrow"><div class="lab"><b>业务方看到</b>本月排期 '+d.plan+' 个</div><div class="track">'+
+        seg(d.a,"c1","① 本月排期、本月上线："+d.a+" 个",d.a)+
+        seg(d.plan-d.a,"cr","本月排期、未在本月上线："+(d.plan-d.a)+" 个",d.plan-d.a)+
+      '</div></div>'+
+      '<div class="hrow"><div class="lab"><b>效能看到</b>本月上线 '+d.rel+' 个</div><div class="track">'+
+        seg(d.a,"c1","① 本月排期、本月上线："+d.a+" 个",d.a)+
+        seg(d.b,"c2","② 往月排期、本月上线（跨月滚入）："+d.b+" 个",d.b)+
+        seg(d.c,"c3","③ 计划外插入、本月上线："+d.c+" 个",d.c)+
+      '</div></div>';
+    document.getElementById("bridgeHint").innerHTML=
+      '当月兑现率 <b>'+rate+'%</b>（'+d.a+' ÷ '+d.plan+'）。两个数相差 <b>'+(d.rel-d.a)+'</b> 个 = '+d.b+' 个跨月滚入 + '+d.c+' 个计划外插入。';
+    document.getElementById("bridgeStock").textContent=
+      '存量方程：月初在制 '+d.w0+' + 新排期 '+d.plan+' + 插入 '+d.ins+' − 上线 '+d.rel+' − 取消/移出 '+d.cancel+' = 月末在制 '+d.w1;
+    [1,2,3].forEach(function(k){document.getElementById("bm"+k).setAttribute("aria-pressed",String(k===m))});
+  }
+  [1,2,3].forEach(function(k){document.getElementById("bm"+k).addEventListener("click",function(){render(k)})});
+  render(2);
+
+  /* 目录高亮 */
+  var links={}; document.querySelectorAll(".toc a").forEach(function(a){links[a.getAttribute("href").slice(1)]=a});
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){Object.keys(links).forEach(function(k){links[k].removeAttribute("aria-current")});
+        var a=links[e.target.id]; if(a){a.setAttribute("aria-current","true");
+          if(window.innerWidth<1080){var ol=a.closest("ol"); ol.scrollLeft=a.parentNode.offsetLeft-ol.clientWidth/2+a.offsetWidth/2;}}}
+    })},{rootMargin:"-30% 0px -65% 0px"});
+    document.querySelectorAll("section.part").forEach(function(s){io.observe(s)});
+  }
+})();
+</script>
