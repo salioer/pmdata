@@ -1,11 +1,14 @@
 # pmdata 协作约定
 
+> 新会话或上下文压缩后，先读 `docs/项目交接.md`：里面有已确认的决策、关键算例、待确认事项和更新流程。
+
 ## 方案从文档来，展示用 HTML
 
 - **唯一内容来源**：`docs/研发数据体系方案.md`。方案的任何修改都先改这份文档。
 - **展示层**：`docs/研发数据体系方案.html` 由这份文档生成，只负责可视化呈现，不新增文档里没有的结论。文档改动后必须同步更新 HTML，并重新发布到同一个 Artifact 链接：https://claude.ai/artifact/TxtjY2MWvLj3t4SnRDAPg7 （从其他会话更新时，发布时传入这个 URL）。
 - HTML 文件是 Artifact 片段格式（不含 `<!doctype>`、`<html>`、`<head>`、`<body>`），由 Artifact 发布时自动包装。
-- **指标字典**：`metrics/指标字典.csv` 与文档第四部分"指标总表"、第六部分"指标 × 校验对照"一一对应，三处要一起改。
+- **指标字典**：`metrics/指标字典.csv` 与文档第四部分"指标总表"、第六部分"指标 × 校验对照"一一对应，三处要一起改。CSV 由 `tools/gen_indicator_csv.py` 生成，改完跑 `python3 tools/check_consistency.py` 核对。
+- **先讨论、后改文件**：用户提出新想法时，先在聊天里给设计，用户确认后才更新文件。
 
 ## 写作要求
 
