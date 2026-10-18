@@ -289,6 +289,15 @@ pre.block{margin:0;background:var(--sunken);border-radius:8px;padding:14px 16px;
 .cmp-bar.before{background:var(--ref)} .cmp-bar.after{background:var(--s1)}
 .cmp-verdict{font-size:13px}
 @media (max-width:560px){.cmp-row{grid-template-columns:1fr;gap:6px}}
+.funnel{display:grid;gap:10px}
+.frow{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr) minmax(0,240px);gap:12px;align-items:center}
+.frow .fl{font-size:13px;color:var(--ink-2);line-height:1.4}
+.frow .fl b{display:block;font-size:14px;color:var(--ink)}
+.ftrack{min-width:0}
+.fbar{height:28px;background:var(--s1);border-radius:0 4px 4px 0;display:flex;align-items:center;padding-left:8px;color:var(--on-mark);font-size:12.5px;font-weight:500;font-variant-numeric:tabular-nums;cursor:default}
+.frow .fn{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.frow .fn b{color:var(--accent-ink)}
+@media (max-width:560px){.frow{grid-template-columns:1fr;gap:4px}}
 .tiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:4px}
 .tile .tl{font-size:12.5px;color:var(--muted)}
@@ -379,7 +388,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
 
 <div class="shell">
   <nav class="toc" aria-label="章节目录">
-    <div class="brand">研发数据体系方案<small>v1.4 · 2026-10-18</small></div>
+    <div class="brand">研发数据体系方案<small>v1.5 · 2026-10-18</small></div>
     <ol>
       <li><a href="#overview"><span class="n">总</span>总述</a></li>
       <li><a href="#p1"><span class="n">一</span>设计前提</a></li>
@@ -402,7 +411,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       <h1>研发数据体系建设与治理方案</h1>
       <div class="meta">
         <span><b>读者</b>所有人</span>
-        <span><b>版本</b>v1.4（2026-10-18）</span>
+        <span><b>版本</b>v1.5（2026-10-18）</span>
         <span><b>状态</b>待评审；第九部分为待讨论议题</span>
       </div>
       <p class="thesis">AI 的提效不体现在"总工时变少"，而体现在"同一份工时喂饱了更多需求"。</p>
@@ -453,12 +462,25 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </div>
 
       <div class="sec">
-        <h3>四个关键设计</h3>
+        <h3>业务体感：给业务方看的四件事</h3>
+        <p class="lead">上面五个数是研发内部的账，里面的当量、人日、人效，业务方不需要理解，也不对外展示。给业务方看的是他们能直接感受到的四件事，全部用需求个数和天数表达：</p>
+        <div class="q5">
+          <div class="q"><div class="ask">接得住</div><div class="metric">需求吞吐率</div><div class="why">每次排期提交的需求，有多少排进去了；以及需求积压</div></div>
+          <div class="q"><div class="ask">交付得多</div><div class="metric">月交付需求数</div><div class="why">按排期类型、需求类型拆分</div></div>
+          <div class="q"><div class="ask">交付得快</div><div class="metric">端到端交付周期</div><div class="why">以及小需求响应时长</div></div>
+          <div class="q"><div class="ask">答应的做到</div><div class="metric">承诺兑现率</div><div class="why">以及排期移出率</div></div>
+        </div>
+        <p class="note">每个数都和 AI 推广前对比。头条是需求吞吐率、端到端交付周期、承诺兑现率三个数的变化。</p>
+      </div>
+
+      <div class="sec">
+        <h3>五个关键设计</h3>
         <div class="grid g2">
           <div class="card"><div class="kicker">解决：工时分到哪个需求上不准</div><h4>分母用名册</h4><p>北极星只用名册可用人日，工时明细只作诊断。</p></div>
           <div class="card"><div class="kicker">解决：规模档不准；人日随 AI 下降导致"掉档"</div><h4>预估工作量定档 + 每月纠偏</h4><p>用 TL 排期时的评估人日定档并冻结；上线后每月纠偏，<b>只按实际上调，不按实际下调</b>。</p></div>
           <div class="card"><div class="kicker">解决：排期与发布对不上；跨月需求让月度数字跳动</div><h4>双口径 + 桥接表</h4><p>承诺口径（按排期批次）和产出口径（按上线月）并存，北极星只用产出口径；每月一张桥接表按排期类型拆清差额，跨月影响靠滚动窗口和在制变化处理。</p></div>
           <div class="card"><div class="kicker">解决：校验规则散、数据不可信</div><h4>五域校验 + 数据门禁</h4><p>按人力与工时、需求、规模档、时间、AI 五个域收拢成 15 项校验，每项标明保障哪些指标；校验不过只出底数，不出结论。</p></div>
+          <div class="card"><div class="kicker">解决：业务方看不懂当量，也不该看到人员、成本和故障数据</div><h4>内外两套视角</h4><p>研发内部看全套指标；业务方只看用需求个数和天数表达的业务体感指标，单独一页。</p></div>
         </div>
       </div>
 
@@ -483,7 +505,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
         <h3>路线图一览</h3>
         <div class="road">
           <div class="ph"><div class="pn">P0</div><h4>摸底与止血</h4><div class="dur">2–4 周</div><p>跑 15 项校验底数；校准定档参数；antom 对账；iSmart 排期冻结快照</p><div class="out">数据质量基线、定档参数</div></div>
-          <div class="ph"><div class="pn">P1</div><h4>首版账本</h4><div class="dur">4–6 周</div><p>出效率指数 v1；每月纠偏首轮运行；桥接表；数据质量看板</p><div class="out">总览和战场页 v1</div></div>
+          <div class="ph"><div class="pn">P1</div><h4>首版账本</h4><div class="dur">4–6 周</div><p>出效率指数 v1；每月纠偏首轮运行；桥接表；数据质量看板；业务版页面</p><div class="out">总览、战场页、业务版 v1</div></div>
           <div class="ph"><div class="pn">P2</div><h4>稳定运行</h4><div class="dur">1–2 个季度</div><p>纠偏常态化；工时与里程碑治理；质量护栏上线</p><div class="out">人效、周期、护栏升到结论级</div></div>
           <div class="ph"><div class="pn">P3</div><h4>AI 账本</h4><div class="dur">之后</div><p>Token 明细上线；采纳埋点；评估是否启动修改点定档</p><div class="out">AI 效能升到结论级</div></div>
         </div>
@@ -647,7 +669,18 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>生产缺陷修复、运维事务、咨询支持</td><td><span class="lv r"><i></i>否</span>。它们消耗的人日仍在名册可用人日里，体现在"有效工时占比"上</td><td>否</td></tr>
           </tbody>
         </table></div>
-        <p class="lead"><b>未排入需求：</b>业务方提出、但没有排入任何排期的需求，计入需求积压，用于供需视角（见 5.2），不进效能统计。</p>
+        <h4>传统排期的 IN 和 OUT</h4>
+        <div class="tbl"><table>
+          <thead><tr><th>名称</th><th>口径</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">IN</td><td>进入本月排期快照的需求，包括上月延续需求和本月新进需求。每个需求带"已排期第几个月"的属性</td></tr>
+            <tr><td class="nowrap">OUT</td><td>因研发带宽不够、顺延到下月再排的需求。下月重新参与排期，计为"回流"；每个月都计入当月的排期总需求</td></tr>
+            <tr><td class="nowrap">OUT 后取消</td><td>OUT 之后业务方决定不做的需求，不再回流，单独列示</td></tr>
+            <tr><td class="nowrap">本次排期总需求</td><td>IN + OUT = 上月延续 + 上月 OUT 回流 + 本月新提</td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">快速排期没有 OUT；免排期不排队。OUT 目前全部按"研发带宽不够"处理；其他原因（业务主动延后、需求不成熟等）怎么处理，待确认。</p>
+        <p class="lead"><b>需求积压：</b>OUT 之后仍在等待排期的需求，用于业务体感和供需视角（见 5.2、5.5），不进效能统计。</p>
       </div>
 
       <div class="sec">
@@ -877,7 +910,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       <div class="part-head">
         <div class="part-no">第四部分</div>
         <h2>指标体系</h2>
-        <p>一个北极星，四个指标域加一条护栏，共 25 个指标。★ 表示进总览。</p>
+        <p>研发内部：一个北极星、四个指标域加一条护栏，共 25 个指标，★ 表示进内部总览。业务体感：4 个指标，另与研发效率域共用 3 个，单独给业务方看。</p>
       </div>
 
       <div class="sec">
@@ -891,7 +924,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <div class="ind"><span class="id">E03</span><span class="nm">上线需求数（吞吐量）</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
             <div class="ind st"><span class="id">E04</span><span class="nm">研发周期 P50 / P85</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
             <div class="ind"><span class="id">E05</span><span class="nm">承诺兑现率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
-            <div class="ind"><span class="id">E06</span><span class="nm">计划膨胀率</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">E06</span><span class="nm">排期移出率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
             <div class="ind"><span class="id">E07</span><span class="nm">分档单位人日</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
           </div>
           <div class="dom"><h4>B 人效</h4>
@@ -920,7 +953,15 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <div class="ind st"><span class="id">G01</span><span class="nm">上线后 30 天缺陷数 / 当量</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
             <div class="ind"><span class="id">G02</span><span class="nm">回滚率</span><span class="rd"><span class="pill rd-n">不出</span></span></div>
           </div>
+          <div class="dom"><h4>F 业务体感</h4>
+            <div class="ind"><span class="id">F01</span><span class="nm">需求吞吐率</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">F02</span><span class="nm">需求积压</span><span class="rd"><span class="pill rd-c">结论级</span></span></div>
+            <div class="ind"><span class="id">F03</span><span class="nm">端到端交付周期</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <div class="ind"><span class="id">F04</span><span class="nm">小需求响应时长</span><span class="rd"><span class="pill rd-b">底数级</span></span></div>
+            <p class="note">另与 A 域共用 E03、E05、E06</p>
+          </div>
         </div>
+        <div class="callout"><p><strong>两套视角：</strong>A–D 域和护栏是研发内部的账；F 业务体感是业务方能直接感受到的四件事，只用需求个数和天数表达，不出现当量、人日、人效、AI 成本和故障指标。</p></div>
       </div>
 
       <div class="sec">
@@ -936,11 +977,21 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>护栏</td><td>G01 上线后 30 天缺陷数 / 当量</td><td>G02 回滚率</td></tr>
           </tbody>
         </table></div>
+        <h4>业务体感四件事对应的指标 <span class="tag">业务版头条：F01、F03、E05</span></h4>
+        <div class="tbl"><table>
+          <thead><tr><th>业务关心</th><th>指标</th></tr></thead>
+          <tbody>
+            <tr><td>接得住</td><td>F01 需求吞吐率、F02 需求积压</td></tr>
+            <tr><td>交付得多</td><td>E03 月交付需求数（业务版不分规模档）</td></tr>
+            <tr><td>交付得快</td><td>F03 端到端交付周期、F04 小需求响应时长</td></tr>
+            <tr><td>答应的做到</td><td>E05 承诺兑现率、E06 排期移出率</td></tr>
+          </tbody>
+        </table></div>
       </div>
 
       <div class="sec">
         <h3><span class="sn">4.3</span>指标总表</h3>
-        <p class="note">"依赖校验"的编号见第六部分；任一依赖校验为红灯时，该指标降为底数级。结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>。</p>
+        <p class="note">★ = 进研发内部总览（L1）；业务体感指标进业务版页面。"依赖校验"的编号见第六部分；任一依赖校验为红灯时，该指标降为底数级。结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>。</p>
         <div class="tbl"><table>
           <thead><tr><th>编号</th><th>指标</th><th>★</th><th>当前就绪等级</th><th>依赖校验</th></tr></thead>
           <tbody>
@@ -950,7 +1001,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td class="mono">E03</td><td>上线需求数（吞吐量）</td><td></td><td><span class="pill rd-b">底数级</span> 含配置类；易受拆单影响，只作辅助</td><td><div class="chips"><span class="chip">2.1</span><span class="chip">2.3</span></div></td></tr>
             <tr><td class="mono">E04</td><td>研发周期 P50 / P85</td><td class="star">★</td><td><span class="pill rd-b">底数级</span> 4.1 达标后结论级</td><td><div class="chips"><span class="chip">4.1</span></div></td></tr>
             <tr><td class="mono">E05</td><td>承诺兑现率（传统排期按本月新进、快速排期按窗口）</td><td></td><td><span class="pill rd-c">结论级</span> 冻结快照上线后</td><td><div class="chips"><span class="chip">2.2</span><span class="chip">4.2</span></div></td></tr>
-            <tr><td class="mono">E06</td><td>计划膨胀率</td><td></td><td><span class="pill rd-b">底数级</span> 冻结快照上线后</td><td><div class="chips"><span class="chip">4.2</span></div></td></tr>
+            <tr><td class="mono">E06</td><td>排期移出率</td><td></td><td><span class="pill rd-c">结论级</span> 冻结快照上线后</td><td><div class="chips"><span class="chip">4.2</span></div></td></tr>
             <tr><td class="mono">E07</td><td>分档单位人日（诊断）</td><td></td><td><span class="pill rd-b">底数级</span> 始终为诊断用</td><td><div class="chips"><span class="chip">1.2</span><span class="chip">1.3</span><span class="chip">1.4</span><span class="chip">3.2</span></div></td></tr>
             <tr class="grp"><td colspan="5">B 人效</td></tr>
             <tr><td class="mono">P01</td><td>人均吞吐当量</td><td class="star">★</td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">1.1</span><span class="chip">2.1</span><span class="chip">2.3</span><span class="chip">3.1</span><span class="chip">3.2</span></div></td></tr>
@@ -974,6 +1025,11 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr class="grp"><td colspan="5">护栏</td></tr>
             <tr><td class="mono">G01</td><td>上线后 30 天缺陷数 / 当量</td><td class="star">★</td><td><span class="pill rd-n">不出</span> 补建后结论级</td><td><div class="chips"><span class="chip">2.4</span></div></td></tr>
             <tr><td class="mono">G02</td><td>回滚率</td><td></td><td><span class="pill rd-n">不出</span> 补建后结论级</td><td><div class="chips"><span class="chip">2.4</span></div></td></tr>
+            <tr class="grp"><td colspan="5">F 业务体感</td></tr>
+            <tr><td class="mono">F01</td><td>需求吞吐率</td><td></td><td><span class="pill rd-c">结论级</span> 快照中已有 IN / OUT 历史</td><td><div class="chips"><span class="chip">2.3</span><span class="chip">4.2</span></div></td></tr>
+            <tr><td class="mono">F02</td><td>需求积压</td><td></td><td><span class="pill rd-c">结论级</span></td><td><div class="chips"><span class="chip">4.2</span></div></td></tr>
+            <tr><td class="mono">F03</td><td>端到端交付周期 P50 / P85</td><td></td><td><span class="pill rd-b">底数级</span> 4.1 达标后结论级</td><td><div class="chips"><span class="chip">2.2</span><span class="chip">4.1</span></div></td></tr>
+            <tr><td class="mono">F04</td><td>小需求响应时长</td><td></td><td><span class="pill rd-b">底数级</span> 4.1 达标后结论级</td><td><div class="chips"><span class="chip">2.2</span><span class="chip">2.3</span><span class="chip">4.1</span></div></td></tr>
           </tbody>
         </table></div>
       </div>
@@ -983,10 +1039,10 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
         <div class="cards4">
           <div class="icard"><div class="ih"><span class="id">E01</span><b>效率指数（北极星）</b></div><code>Σ 上线需求当量 ÷ Σ 名册可用人日</code><p>同样的人日，交付的活比 AI 推广前多了还是少了。下钻 战场 × 规模档 × 月；滚动 3 个月，基线期 = 1.00。</p><p>误读风险：评估人日下漂会让指数偏保守；指数上升但 G01 恶化属于"提速降质"；指数包含 AI 以外的因素。</p></div>
           <div class="icard"><div class="ih"><span class="id">E02</span><b>吞吐当量</b></div><code>Σ 当期上线需求的当量</code><p>拆单的影响被档位权重大幅削弱，这是用当量而不用需求数的原因。</p></div>
-          <div class="icard"><div class="ih"><span class="id">E03</span><b>上线需求数（吞吐量）</b></div><code>当期上线的需求个数</code><p>含配置类，按排期类型和需求类型拆分。只看吞吐量，不用来衡量效率。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E03</span><b>上线需求数（吞吐量）</b></div><code>当期上线的需求个数</code><p>含配置类，按排期类型和需求类型拆分。只看吞吐量，不用来衡量效率。业务版叫"月交付需求数"，不分规模档。</p></div>
           <div class="icard"><div class="ih"><span class="id">E04</span><b>研发周期</b></div><code>上线日 − 立项日；上线日 − 开发开始日（工作日）</code><p>按上线月分组取 P50 和 P85，必须分档看。</p></div>
           <div class="icard"><div class="ih"><span class="id">E05</span><b>承诺兑现率</b></div><code>传统排期：本月新进且本月上线数 ÷ 本月新进数</code><p>M+1 / M+2 按排期月分批累计；快速排期按窗口计算，再按月汇总；免排期不算。这是承诺口径，和"当月上线数"的差见桥接表。</p></div>
-          <div class="icard"><div class="ih"><span class="id">E06</span><b>计划膨胀率</b></div><code>本月移出数 ÷ 本月排期数</code><p>结合移出原因看。</p></div>
+          <div class="icard"><div class="ih"><span class="id">E06</span><b>排期移出率</b></div><code>本月移出数 ÷ 本月排期数</code><p>看排期稳不稳，结合移出原因看。</p></div>
           <div class="icard"><div class="ih"><span class="id">E07</span><b>分档单位人日</b></div><code>某档上线需求报工人日合计 ÷ 该档上线需求数</code><p>只用于诊断，不进总览。</p></div>
           <div class="icard"><div class="ih"><span class="id">P01</span><b>人均吞吐当量</b></div><code>Σ 上线需求当量 ÷ 名册月均在册人数 ÷ 月数</code><p>与 E01 同源，额外价值是可以按正式 / 数马拆开看。</p></div>
           <div class="icard"><div class="ih"><span class="id">P02</span><b>人均并发需求</b></div><code>Σ（人 × 周 × 需求）组合数 ÷ Σ 在册人周</code><p>一个人一周内对某需求报过工，就算在做这个需求。必须配合吞吐和周期看，见 5.2。</p></div>
@@ -997,6 +1053,10 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
           <div class="icard"><div class="ih"><span class="id">Q01</span><b>数据校验达标率</b></div><code>绿灯校验项数 ÷ 校验项总数</code><p>并列出红灯项。它决定其他指标的就绪等级。</p></div>
           <div class="icard"><div class="ih"><span class="id">Q02 / Q03</span><b>档位一致率 / 纠偏率</b></div><code>Q02 = 初始档与实际档相同或差一档的占比；Q03 = 当月改档占比</code><p>两者都是每月纠偏的产出。</p></div>
           <div class="icard"><div class="ih"><span class="id">G01</span><b>上线后 30 天缺陷数 / 当量</b></div><code>上线后 30 天缺陷数 ÷ 该批需求当量</code><p>相对基线恶化超过阈值时，该战场 E01 在总览上一律标黄。</p></div>
+          <div class="icard"><div class="ih"><span class="id">F01</span><b>需求吞吐率</b></div><code>IN ÷（IN + OUT），只算传统排期</code><p>每次排期提交的需求，有多少排进去了。IN 含上月延续和本月新进，按已排期月数拆开看。研发可以把需求都排进来但做不完，所以必须和 E05 一起看。</p></div>
+          <div class="icard"><div class="ih"><span class="id">F02</span><b>需求积压</b></div><code>OUT 后仍在等待排期的需求数；平均已等轮数</code><p>一轮 = 一次月度排期。OUT 后被业务取消的需求单列。</p></div>
+          <div class="icard"><div class="ih"><span class="id">F03</span><b>端到端交付周期</b></div><code>上线日 − 需求提出日（自然日），P50 / P85</code><p>拆成"等排期"（提出 → 首次进入 IN）和"研发"（首次进入 IN → 上线）两段。业务版不分规模档。</p></div>
+          <div class="icard"><div class="ih"><span class="id">F04</span><b>小需求响应时长</b></div><code>上线日 − 需求提出日（自然日），P50</code><p>只看快速排期和免排期需求。</p></div>
         </div>
       </div>
     </section>
@@ -1081,7 +1141,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
           <div class="sub">阶段系数按里程碑取，示意：已排期未开始 0、开发中 50%、测试中 80%。</div>
         </div>
         <p class="lead"><b>为什么不用"单位需求人日"做北极星：</b>它依赖工时分配的准确性、受档位结构影响、受拆单影响。保留为 E07，只作诊断。</p>
-        <p class="lead"><b>辅助指标：</b>E04 研发周期看速度，必须分档；E05 承诺兑现率看对业务方的承诺；E06 计划膨胀率看排期稳定性。</p>
+        <p class="lead"><b>辅助指标：</b>E04 研发周期看速度，必须分档；E05 承诺兑现率看对业务方的承诺；E06 排期移出率看排期稳定性。</p>
       </div>
 
       <div class="sec">
@@ -1163,13 +1223,72 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </div>
 
       <div class="sec">
-        <h3><span class="sn">5.5</span>解读规则</h3>
+        <h3><span class="sn">5.5</span>业务体感</h3>
+        <p class="lead">业务方不关心当量和人日，关心的是四件事：提的需求接不接得住、交付得多不多、快不快、答应的做没做到。这一节说明这四件事怎么算，全部用需求个数和天数表达，不分需求大小。</p>
+
+        <h4>需求吞吐率（F01）：接得住</h4>
+        <div class="formula">
+          <div class="eq"><em>需求吞吐率</em> = IN ÷（IN + OUT）</div>
+          <div class="sub">只算传统排期。IN 含上月延续和本月新进；OUT 是因研发带宽不够、顺延到下月再排的需求。</div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>项目</th><th class="num">第 1 月</th><th class="num">第 2 月</th><th class="num">第 3 月</th></tr></thead>
+          <tbody>
+            <tr><td>上月延续</td><td class="num">27</td><td class="num">27</td><td class="num">23</td></tr>
+            <tr><td>上月 OUT 回流</td><td class="num">4</td><td class="num">6</td><td class="num">8</td></tr>
+            <tr><td>本月新提</td><td class="num">32</td><td class="num">31</td><td class="num">27</td></tr>
+            <tr class="tot"><td>本次排期总需求</td><td class="num">63</td><td class="num">64</td><td class="num">58</td></tr>
+            <tr><td>IN（延续 + 新进）</td><td class="num">57（27 + 30）</td><td class="num">55（27 + 28）</td><td class="num">53（23 + 30）</td></tr>
+            <tr><td>OUT（顺延到下月）</td><td class="num">6</td><td class="num">9</td><td class="num">5</td></tr>
+            <tr class="tot"><td>需求吞吐率</td><td class="num">90.5%</td><td class="num">85.9%</td><td class="num">91.4%</td></tr>
+            <tr><td>上月 OUT 中被业务取消的</td><td class="num">—</td><td class="num">0</td><td class="num">1</td></tr>
+          </tbody>
+        </table></div>
+        <p class="note">示例：虚拟战场 A，IN 中的新进需求和桥接表的"本月新进"一致。第 2 月 OUT 了 9 个，其中 1 个业务方不做了，所以第 3 月只回流 8 个。</p>
+        <p class="lead"><b>IN 按已排期月数拆开</b>（第 2 月）：第 1 个月 28 个、第 2 个月 10 个、第 3 个月及以上 17 个。能看出有多少产能被长期在做的需求占着。</p>
+
+        <div class="viz">
+          <div class="viz-title"><h4>排期漏斗：第 2 月</h4><span>把吞吐率、兑现率、移出率串成一条线</span></div>
+          <div class="funnel">
+            <div class="frow"><div class="fl"><b>本次排期总需求</b>64 个</div><div class="ftrack"><div class="fbar" style="width:100%" data-tip="本次排期总需求 64 个" tabindex="0">64</div></div><div class="fn">= 延续 27 + 上月 OUT 回流 6 + 本月新提 31</div></div>
+            <div class="frow"><div class="fl"><b>IN</b>进入排期</div><div class="ftrack"><div class="fbar" style="width:85.9%" data-tip="IN 55 个 = 延续 27 + 新进 28" tabindex="0">55</div></div><div class="fn">需求吞吐率 <b>85.9%</b>；OUT 9 个顺延到下月</div></div>
+            <div class="frow"><div class="fl"><b>其中本月新进</b>答应业务方的</div><div class="ftrack"><div class="fbar" style="width:43.75%" data-tip="本月新进 28 个" tabindex="0">28</div></div><div class="fn">另有延续 27 个：当月上线 13，继续 14</div></div>
+            <div class="frow"><div class="fl"><b>新进当月上线</b>当月交付</div><div class="ftrack"><div class="fbar" style="width:26.56%" data-tip="本月新进中当月上线 17 个" tabindex="0">17</div></div><div class="fn">承诺兑现率 <b>60.7%</b>；中途移出 2（排期移出率 7.1%），跨月继续 9（M+1 累计 92.9%）</div></div>
+          </div>
+          <span class="sample">示例：虚拟战场 A，单位：需求个数</span>
+        </div>
+        <p class="note">快速排期和免排期不进这个漏斗，单独看交付数和响应时长。</p>
+
+        <p class="lead"><b>需求积压（F02）：</b>还在等待排期的 OUT 需求数，以及平均已等几轮（一轮 = 一次月度排期）。OUT 后被业务取消的需求单列：它可能意味着需求因为等不到排期而流失。</p>
+
+        <h4>端到端交付周期（F03）：交付得快</h4>
+        <div class="formula">
+          <div class="eq"><em>端到端交付周期</em> = 上线日 − 需求提出日（自然日）</div>
+          <div class="sub">取 P50 / P85。等排期 = 提出 → 首次进入 IN；研发 = 首次进入 IN → 上线。</div>
+        </div>
+        <div class="steps">
+          <div class="step"><div class="when">3 月 2 日</div><p>需求提出</p></div>
+          <div class="step"><div class="when">3 月排期</div><p>被 OUT，顺延到 4 月</p></div>
+          <div class="step"><div class="when">4 月 3 日</div><p>进入 IN：等排期 32 天</p></div>
+          <div class="step"><div class="when">4 月 25 日</div><p>上线：研发 22 天，端到端 54 天</p></div>
+        </div>
+        <p class="lead">业务方能看清慢在排不上队，还是慢在做得慢。</p>
+        <p class="note">业务版用自然日，更贴近业务方的感受；研发内部的研发周期（E04）用工作日。业务版不分规模档，小需求变多时 P50 会跟着变短，其中一部分是 AI 带来的真实效果；研发内部仍然分档看。</p>
+
+        <p class="lead"><b>小需求响应时长（F04）：</b>快速排期和免排期需求，从提出到上线的天数 P50。例：一个免排期的配置需求 5 月 6 日提出、5 月 8 日上线，响应时长 2 天。这是业务方最能直接感受到 AI 效果的地方。</p>
+        <p class="lead"><b>月交付需求数（E03）、承诺兑现率（E05）、排期移出率（E06）：</b>沿用第四部分的定义，业务版不分规模档。</p>
+        <div class="callout"><p><strong>和 AI 的关系：</strong>AI 推广后人少了，如果需求吞吐率不降、端到端交付周期和响应时长缩短，业务方就能直接感受到效率提升，不需要讲当量。每个指标都展示"AI 推广前 → 当期"的变化；OUT 的历史在排期快照里，基线期的吞吐率可以直接算出来。</p></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">5.6</span>解读规则</h3>
         <ol class="nums">
           <li><b>先看门禁，再看数。</b>底数级的指标只描述现象，不下结论。</li>
           <li><b>先看护栏。</b>G01 恶化超过阈值时，不论效率指数多高，该战场总览标黄。</li>
           <li><b>看定档提示。</b>校验 3.3 提示下漂时，效率指数偏保守；提示估高时，效率指数可能偏高。</li>
           <li><b>看趋势，不看单月。</b>结论用滚动 3 个月。</li>
           <li><b>归因要克制。</b></li>
+          <li><b>业务体感要成对看。</b>吞吐率高但兑现率低，说明排进去的做不完；端到端周期变短，要看是不是小需求变多了。</li>
         </ol>
       </div>
     </section>
@@ -1189,6 +1308,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
           <div class="card"><span class="pill rd-b">底数级</span><p>只出数，不下结论。任一依赖校验为红。</p></div>
           <div class="card"><span class="pill rd-n">不出</span><p>数据缺失。数据源尚未补建。</p></div>
         </div>
+        <p class="lead"><b>业务版的门禁：</b>业务版只展示结论级的指标；依赖校验为红的指标显示"数据核对中"，不展示数字，避免把不准的数给到业务方。</p>
       </div>
 
       <div class="sec">
@@ -1196,9 +1316,9 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
         <p class="lead">原先的 V1–V8 规则按校验对象分散在多处（例如工时相关的规则分布在 V1、V3、V5、V6 中）。现在按<b>数据对象</b>收拢为五个域、15 项校验，每项标明它保障哪些指标的准确性。原编号对照见附录 C。</p>
         <div class="vdoms">
           <div class="vdom"><div class="vn">①</div><h4>人力与工时</h4><div class="vq">分母准不准，工时分到需求上准不准</div><ul><li><span>1.1</span>名册对账</li><li><span>1.2</span>填报完整</li><li><span>1.3</span>填报真实</li><li><span>1.4</span>工时归属</li></ul><div class="for">保障：E01 分母、P01–P05、E07、每月纠偏</div></div>
-          <div class="vdom"><div class="vn">②</div><h4>需求数量与状态</h4><div class="vq">交付了多少，交付了没有</div><ul><li><span>2.1</span>需求完整</li><li><span>2.2</span>状态一致</li><li><span>2.3</span>归属准确</li><li><span>2.4</span>质量关联</li></ul><div class="for">保障：E01 分子、E02、E05、桥接表、G01</div></div>
+          <div class="vdom"><div class="vn">②</div><h4>需求数量与状态</h4><div class="vq">交付了多少，交付了没有</div><ul><li><span>2.1</span>需求完整</li><li><span>2.2</span>状态一致</li><li><span>2.3</span>归属准确</li><li><span>2.4</span>质量关联</li></ul><div class="for">保障：E01 分子、E02、E05、桥接表、G01、F01、F03、F04</div></div>
           <div class="vdom"><div class="vn">③</div><h4>规模档</h4><div class="vq">每个需求值多少活</div><ul><li><span>3.1</span>评估完整</li><li><span>3.2</span>档位准确</li><li><span>3.3</span>漂移监控</li></ul><div class="for">保障：E01、E02、P01、A03、A05</div></div>
-          <div class="vdom"><div class="vn">④</div><h4>时间与排期</h4><div class="vq">什么时候交付的，答应了什么</div><ul><li><span>4.1</span>里程碑质量</li><li><span>4.2</span>排期快照</li></ul><div class="for">保障：E04、E05、E06、桥接表</div></div>
+          <div class="vdom"><div class="vn">④</div><h4>时间与排期</h4><div class="vq">什么时候交付的，答应了什么</div><ul><li><span>4.1</span>里程碑质量</li><li><span>4.2</span>排期快照</li></ul><div class="for">保障：E04、E05、E06、桥接表、F01–F04</div></div>
           <div class="vdom"><div class="vn">⑤</div><h4>AI 与成本</h4><div class="vq">AI 用了多少，花了多少</div><ul><li><span>5.1</span>遥测覆盖</li><li><span>5.2</span>成本明细</li></ul><div class="for">保障：A01–A07</div></div>
         </div>
         <ul class="dots note">
@@ -1275,7 +1395,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
                 <tr><td>已上线未关单占比（发布 14 天后仍未关闭）</td><td class="t">≤ 5%</td><td class="t">5–15%</td><td class="t">&gt; 15%</td></tr>
                 <tr><td>状态停滞占比（开发中或测试中，但连续 3 周无报工）</td><td class="t">≤ 3%</td><td class="t">3–8%</td><td class="t">&gt; 8%</td></tr>
               </tbody></table></div>
-              <div class="for">保障指标<span class="chip">E01</span><span class="chip">E02（上线判定）</span><span class="chip">E04</span><span class="chip">E05</span><span class="chip">P02（在制）</span><span class="chip">桥接表</span></div>
+              <div class="for">保障指标<span class="chip">E01</span><span class="chip">E02（上线判定）</span><span class="chip">E04</span><span class="chip">E05</span><span class="chip">P02（在制）</span><span class="chip">桥接表</span><span class="chip">F03 / F04（上线判定）</span></div>
             </div>
             <div class="check">
               <div class="ch"><span class="cid">2.3</span><b>归属准确</b><span class="tag">原 V6.3、V6.4</span></div>
@@ -1348,8 +1468,9 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
                 <tr><td>照抄率（计划日期与实际日期完全相等的需求占比）</td><td class="t">≤ 10%</td><td class="t">10–30%</td><td class="t">&gt; 30%</td></tr>
                 <tr><td>集中补录率（录入时间晚于实际日期 7 天以上）</td><td class="t">≤ 15%</td><td class="t">15–35%</td><td class="t">&gt; 35%</td></tr>
                 <tr><td>上线日与生产发布日相差 3 天以上的占比</td><td class="t">≤ 5%</td><td class="t">5–15%</td><td class="t">&gt; 15%</td></tr>
+                <tr><td>需求提出时间缺失，或晚于首次进入排期的占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
               </tbody></table></div>
-              <div class="for">保障指标<span class="chip">E04 研发周期</span><span class="chip">E06 计划膨胀率</span><span class="chip">E01（上线月归属）</span><span class="chip">P02（利特尔定律校验）</span></div>
+              <div class="for">保障指标<span class="chip">E04 研发周期</span><span class="chip">E06 排期移出率</span><span class="chip">E01（上线月归属）</span><span class="chip">P02（利特尔定律校验）</span><span class="chip">F03 端到端交付周期</span><span class="chip">F04 小需求响应时长</span></div>
             </div>
             <div class="check">
               <div class="ch"><span class="cid">4.2</span><b>排期快照</b><span class="tag">原 V8.3 + 新增</span></div>
@@ -1357,8 +1478,10 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
                 <tr><td>月初冻结按时完成</td><td class="t">是</td><td class="t">—</td><td class="t">否</td></tr>
                 <tr><td>冻结后的修改未记为"插入 / 移出"的次数</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
                 <tr><td>antom 与 iSmart 排期月不一致的占比</td><td class="t">≤ 3%</td><td class="t">3–10%</td><td class="t">&gt; 10%</td></tr>
+                <tr><td>OUT 回流对不上的需求数（上月 OUT − 本月回流 − OUT 后取消 ≠ 0）</td><td class="t">0</td><td class="t">1–3</td><td class="t">&gt; 3</td></tr>
+                <tr><td>"已排期第几个月"属性缺失的占比</td><td class="t">≤ 2%</td><td class="t">2–5%</td><td class="t">&gt; 5%</td></tr>
               </tbody></table></div>
-              <div class="for">保障指标<span class="chip">E05 承诺兑现率</span><span class="chip">E06 计划膨胀率</span><span class="chip">桥接表</span><span class="chip">随快照冻结的评估人日（3.1）</span></div>
+              <div class="for">保障指标<span class="chip">E05 承诺兑现率</span><span class="chip">E06 排期移出率</span><span class="chip">桥接表</span><span class="chip">F01 需求吞吐率</span><span class="chip">F02 需求积压</span><span class="chip">随快照冻结的评估人日（3.1）</span></div>
             </div>
           </div>
         </div>
@@ -1397,7 +1520,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
           </thead>
           <tbody id="mxbody"></tbody>
         </table></div>
-        <div class="callout"><p><strong>一眼可见的结论：</strong>北极星 E01 不依赖工时明细（1.2–1.4），只依赖名册、需求和规模档；工时治理主要影响人效诊断类指标（P02、P03、E07）。</p></div>
+        <div class="callout"><p><strong>一眼可见的结论：</strong>北极星 E01 不依赖工时明细（1.2–1.4），只依赖名册、需求和规模档；工时治理主要影响人效诊断类指标（P02、P03、E07）；业务体感指标（F01–F04）只依赖排期快照、状态和里程碑，不依赖工时和定档。</p></div>
       </div>
 
       <div class="sec">
@@ -1410,6 +1533,8 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>是否上线、上线日</td><td>生产发布记录；关联不到需求时暂用 iSmart 实际上线日并打标记</td></tr>
             <tr><td>排期批次、评估人日</td><td>iSmart 排期快照（传统排期在月初，快速排期在每个窗口，后者待确认）</td></tr>
             <tr><td>需求类型（配置类 / 范式化 / 业务技术需求）</td><td>iSmart 需求打标</td></tr>
+            <tr><td>IN / OUT、回流、已排期月数</td><td>iSmart 排期快照</td></tr>
+            <tr><td>需求提出时间</td><td>iSmart 创建时间；antom 战场以 antom 创建时间为准</td></tr>
             <tr><td>报工人日</td><td>iSmart</td></tr>
             <tr><td>在册人员、所属战场</td><td>HR / PMO 名册</td></tr>
             <tr><td>规模档</td><td>定档结果表（含纠偏记录）；范式化需求以范式档位表为准</td></tr>
@@ -1496,20 +1621,21 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       <div class="part-head">
         <div class="part-no">第七部分</div>
         <h2>展示与运营</h2>
-        <p>三层看板让不同的人看到自己需要的东西；桥接表回答"两个数为什么对不上"；运营节奏让这一切按月转起来。</p>
+        <p>内部三层看板和业务版，让不同的人看到自己需要的东西；桥接表回答"两个数为什么对不上"；运营节奏让这一切按月转起来。</p>
       </div>
 
       <div class="sec">
-        <h3><span class="sn">7.1</span>三层读法</h3>
+        <h3><span class="sn">7.1</span>读法分层</h3>
         <div class="tbl"><table>
           <thead><tr><th>层</th><th>读者</th><th>内容</th><th>刷新</th></tr></thead>
           <tbody>
-            <tr><td class="nowrap"><b>L1</b> 一页纸</td><td>CIO 及所有人</td><td>5 个数 + 护栏 + 红黄绿 + 一句话结论</td><td class="nowrap">月度</td></tr>
-            <tr><td class="nowrap"><b>L2</b> 战场页</td><td>战场负责人、业务方</td><td>双口径与桥接表、分档下钻、本战场异常清单</td><td class="nowrap">月度（异常清单每周）</td></tr>
+            <tr><td class="nowrap"><b>L1</b> 一页纸</td><td>CIO 及研发管理层</td><td>5 个数 + 护栏 + 红黄绿 + 一句话结论</td><td class="nowrap">月度</td></tr>
+            <tr><td class="nowrap"><b>L2</b> 战场页</td><td>战场负责人、研发管理者</td><td>双口径与桥接表、分档下钻、本战场异常清单</td><td class="nowrap">月度（异常清单每周）</td></tr>
             <tr><td class="nowrap"><b>L3</b> 口径与明细</td><td>PM 团队、数据团队</td><td>指标卡、校验明细、纠偏记录、算例</td><td class="nowrap">随时</td></tr>
+            <tr><td class="nowrap"><b>业务版</b></td><td>业务团队</td><td>业务体感四件事 + 排期漏斗（见 7.4）</td><td class="nowrap">月度：排期冻结后先出吞吐率</td></tr>
           </tbody>
         </table></div>
-        <p class="note">所有层最细到"战场 × 团队 × 周"，不出个人。</p>
+        <p class="note">L1–L3 是研发内部视图，含当量、人效、AI 成本和质量指标，不对业务方展示；业务版单独一页。所有页面最细到"战场 × 团队 × 周"，不出个人。</p>
       </div>
 
       <div class="sec">
@@ -1554,7 +1680,27 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </div>
 
       <div class="sec">
-        <h3><span class="sn">7.4</span>双口径与月度桥接表</h3>
+        <h3><span class="sn">7.4</span>业务版</h3>
+        <p class="lead"><b>读者：</b>业务团队。</p>
+        <div class="grid g3">
+          <div class="card"><h4>只用个数和天数</h4><p>不出现当量、人日、人效、AI 成本和故障指标，也不分规模档。</p></div>
+          <div class="card"><h4>只放结论级的数</h4><p>依赖校验为红的指标显示"数据核对中"，不展示数字。</p></div>
+          <div class="card"><h4>不给研发打分</h4><p>不用红黄绿，只展示和 AI 推广前相比的变化方向：改善 / 持平 / 变差。</p></div>
+        </div>
+        <div class="tbl"><table>
+          <thead><tr><th>区块</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">头条</td><td>需求吞吐率、端到端交付周期 P50、承诺兑现率，各自"AI 推广前 → 当期"的变化</td></tr>
+            <tr><td class="nowrap">接得住</td><td>需求吞吐率趋势；IN 按已排期月数的构成；需求积压（还在等的数量、平均已等轮数、OUT 后取消数）</td></tr>
+            <tr><td class="nowrap">交付得多</td><td>月交付需求数，按排期类型、需求类型拆分</td></tr>
+            <tr><td class="nowrap">交付得快</td><td>端到端交付周期（等排期 + 研发两段）；小需求响应时长</td></tr>
+            <tr><td class="nowrap">答应的做到</td><td>排期漏斗（总需求 → IN / OUT → 当月上线 / 移出 / 跨月继续）；承诺兑现率 M、M+1、M+2；排期移出率</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3><span class="sn">7.5</span>双口径与月度桥接表</h3>
         <p class="lead">业务方看的是"排的交了多少"，效能分析看的是"当月上线了多少"。跨月需求和三种排期方式让两个数天然对不上。两个口径都保留，每月一张桥接表把差额拆清楚。</p>
         <pre class="block">存量方程（只含进效能统计的需求，配置类单列吞吐量）：
 月初在制 + 本月新进 + 快速排期 + 免排期（范式化） + 计划外插入 − 本月上线 − 取消/移出 = 月末在制
@@ -1626,7 +1772,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </div>
 
       <div class="sec">
-        <h3><span class="sn">7.5</span>跨战场比较</h3>
+        <h3><span class="sn">7.6</span>跨战场比较</h3>
         <ol class="nums">
           <li><b>比趋势不比绝对值</b>：每个战场以自己的基线期为 1.00。</li>
           <li><b>看定档提示</b>：校验 3.3 触发的战场，比较时加注。</li>
@@ -1635,14 +1781,14 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </div>
 
       <div class="sec">
-        <h3><span class="sn">7.6</span>运营节奏</h3>
+        <h3><span class="sn">7.7</span>运营节奏</h3>
         <div class="tbl"><table>
           <thead><tr><th>频率</th><th>动作</th><th>参与方</th></tr></thead>
           <tbody>
             <tr><td class="nowrap">每日</td><td>antom 对账；同步失败告警</td><td>数据团队（自动）</td></tr>
             <tr><td class="nowrap">每周</td><td>15 项校验运行；异常清单推送</td><td>数据团队、战场接口人</td></tr>
             <tr><td class="nowrap">每 2 周</td><td>快速排期窗口快照冻结（待确认）</td><td>数据团队（自动）</td></tr>
-            <tr><td class="nowrap">每月</td><td>月末生成纠偏清单；第 3 个工作日排期冻结；第 5 个工作日完成纠偏确认；第 7 个工作日发布月报并复盘</td><td>PM 团队、TL、各战场负责人</td></tr>
+            <tr><td class="nowrap">每月</td><td>月末生成纠偏清单；第 3 个工作日排期冻结，同时出本月需求吞吐率；第 5 个工作日完成纠偏确认；第 7 个工作日发布内部月报和业务版月报，并复盘</td><td>PM 团队、TL、各战场负责人</td></tr>
             <tr><td class="nowrap">每季度</td><td>档位漂移与估算偏差复盘；红黄绿阈值与指标评审</td><td>PM 团队、战场架构师、数据团队</td></tr>
             <tr><td class="nowrap">每年</td><td>档位阈值、权重、k 值复核</td><td>PM 团队、数据团队</td></tr>
           </tbody>
@@ -1672,6 +1818,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>需求类型打标规则（配置类 / 范式化 / 业务技术需求）；范式档位表首版</td><td>打标规则、范式档位表</td><td>现有范式全部定档；2.3 中需求类型一项有底数</td></tr>
             <tr><td>线上质量最小集</td><td>缺陷关联需求的采集方案</td><td>2.4 可出底数</td></tr>
             <tr><td>存量看板盘点</td><td>盘点表</td><td>每个看板都有四象限归类</td></tr>
+            <tr><td>核对排期快照字段：IN / OUT、回流、已排期月数、需求提出时间</td><td>字段核对结论</td><td>校验 4.1、4.2 中相关判定项有底数；能算出基线期需求吞吐率</td></tr>
           </tbody>
         </table></div>
         <h4>P1 首版账本 <span class="tag">约 4–6 周</span></h4>
@@ -1683,6 +1830,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>双口径与桥接表</td><td>各战场月度桥接表、分批跟踪表</td><td>存量方程平衡；① + ② + ③ = 当月上线</td></tr>
             <tr><td>数据质量看板</td><td>15 项校验红黄绿、异常清单</td><td>每周自动运行</td></tr>
             <tr><td>L1、L2 v1</td><td>首期月报</td><td>所有指标标注就绪等级</td></tr>
+            <tr><td>业务版 v1</td><td>首期业务版月报</td><td>只含结论级指标；不出现当量、人效、成本、故障指标</td></tr>
             <tr><td>旧指标首批下线</td><td>下线清单</td><td>使用方已通知</td></tr>
             <tr><td>Token 明细标准方案</td><td>字段标准与采集方案</td><td>AI 工具方确认</td></tr>
           </tbody>
@@ -1737,6 +1885,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td class="nowrap">研发 TL</td><td>沿用：排期时填评估人日；新增：每月少量例外确认（不处理按默认规则）</td><td>很小</td></tr>
             <tr><td class="nowrap">研发人员</td><td>沿用：报工</td><td>无</td></tr>
             <tr><td class="nowrap">HR / PMO</td><td>按月提供名册</td><td>无（已有月表）</td></tr>
+            <tr><td class="nowrap">业务团队</td><td>阅读业务版，对需求吞吐率、交付周期等提出反馈</td><td>无</td></tr>
           </tbody>
         </table></div>
       </div>
@@ -1816,7 +1965,8 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
             <tr><td>数马人日单价</td><td>PMO</td><td class="mono">5.4</td></tr>
             <tr><td>各校验阈值（P0 后校准）</td><td>数据团队</td><td class="mono">6.2</td></tr>
             <tr><td>故意估高的处理方式：只公示，还是纳入团队复盘</td><td>PM 团队</td><td class="mono">3.5</td></tr>
-            <tr><td>快速排期的窗口快照能否在 iSmart 中冻结（影响快速排期的定档时点和兑现率）</td><td>iSmart 产品团队</td><td class="mono">2.3、3.2、7.6</td></tr>
+            <tr><td>快速排期的窗口快照能否在 iSmart 中冻结（影响快速排期的定档时点和兑现率）</td><td>iSmart 产品团队</td><td class="mono">2.3、3.2、7.7</td></tr>
+            <tr><td>OUT 中非带宽原因（业务主动延后、需求不成熟等）怎么处理：是否从吞吐率分母中剔除</td><td>PM 团队</td><td class="mono">2.3、5.5</td></tr>
           </tbody>
         </table></div>
       </div>
@@ -1841,11 +1991,25 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
       </table></div>
 
       <div class="sec">
-        <h3>三句话</h3>
+        <h3>业务方看到什么</h3>
+        <div class="tbl"><table>
+          <thead><tr><th>业务关心</th><th>看哪个数</th><th>靠什么保障</th><th>什么时候能看</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><b>接得住</b></td><td>F01 需求吞吐率、F02 需求积压</td><td>4.2 排期快照、2.3 归属</td><td>P1 起，基线期可从快照回算</td></tr>
+            <tr><td class="nowrap"><b>交付得多</b></td><td>E03 月交付需求数</td><td>2.1、2.3</td><td>P1 起</td></tr>
+            <tr><td class="nowrap"><b>交付得快</b></td><td>F03 端到端交付周期、F04 小需求响应时长</td><td>2.2 状态、4.1 里程碑</td><td>4.1 达标后（P2）</td></tr>
+            <tr><td class="nowrap"><b>答应的做到</b></td><td>E05 承诺兑现率、E06 排期移出率</td><td>2.2、4.2</td><td>P1 起</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="sec">
+        <h3>四句话</h3>
         <div class="three">
           <div class="s3"><div class="k">一</div><p><b>分母用名册、分子用档位当量</b>，北极星不依赖最脏的工时明细。</p></div>
           <div class="s3"><div class="k">二</div><p><b>预估工作量定档、每月按"只上调、不轻易下调"纠偏</b>，在零新增填报的前提下让档位尽量接近真实，又不把 AI 提效纠掉。</p></div>
           <div class="s3"><div class="k">三</div><p><b>五域校验加数据门禁</b>，控制每个结论的强弱，边度量边治理。</p></div>
+          <div class="s3"><div class="k">四</div><p><b>内外两套视角</b>：研发内部看全套指标；业务方只看用需求个数和天数表达的业务体感，不出现当量、人效、成本和故障数据。</p></div>
         </div>
       </div>
 
@@ -1883,14 +2047,21 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
           <div><dt>配置类需求</dt><dd>打标为配置类的需求，不进效能统计，只计吞吐量</dd></div>
           <div><dt>范式化研发需求</dt><dd>有代码量、人工介入很少的免排期需求，进效能统计</dd></div>
           <div><dt>范式档位表</dt><dd>每个范式启用时定一次档、季度复核的对照表，用于范式化需求定档，由战场架构师维护</dd></div>
-          <div><dt>需求积压</dt><dd>业务方提出、但未排入任何排期的需求</dd></div>
+          <div><dt>需求积压</dt><dd>因研发带宽不够被 OUT、仍在等待排期的需求</dd></div>
+          <div><dt>IN</dt><dd>进入本月排期快照的需求，含上月延续和本月新进</dd></div>
+          <div><dt>OUT</dt><dd>因研发带宽不够、顺延到下月再排的需求</dd></div>
+          <div><dt>回流</dt><dd>上月 OUT、本月重新参与排期的需求</dd></div>
+          <div><dt>已排期月数</dt><dd>排期快照中需求的属性，表示这个需求已经排到第几个月</dd></div>
+          <div><dt>需求吞吐率</dt><dd>IN ÷（IN + OUT），只算传统排期</dd></div>
+          <div><dt>端到端交付周期</dt><dd>需求从提出到上线的自然日，分等排期和研发两段</dd></div>
+          <div><dt>业务体感</dt><dd>业务方能直接感受到的四件事：接得住、交付得多、交付得快、答应的做到</dd></div>
           <div><dt>在制变化</dt><dd>月末在制减月初在制；正式月报按当量 × 阶段系数折算</dd></div>
           <div><dt>修改点定档</dt><dd>按需求要改的系统、接口、页面等定档（待讨论）</dd></div>
         </dl>
       </div>
       <div class="sec">
         <h3>B 指标字典</h3>
-        <p class="lead">25 个指标的结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>，可以直接用 Excel 打开。</p>
+        <p class="lead">29 个指标（研发内部 25 个 + 业务体感 4 个）的结构化清单见仓库 <span class="mono">metrics/指标字典.csv</span>，可以直接用 Excel 打开。</p>
       </div>
       <div class="sec">
         <h3>C 原 V1–V8 编号对照</h3>
@@ -1912,7 +2083,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
 
     <footer class="foot">
       <span>本页由仓库中的 docs/研发数据体系方案.md 生成，内容以该文档为准</span>
-      <span>v1.4 · 2026-10-18</span>
+      <span>v1.5 · 2026-10-18</span>
     </footer>
   </main>
 </div>
@@ -1930,7 +2101,7 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
     ["E03 上线需求数",{D:"2.1 2.3"}],
     ["E04 研发周期",{D:"4.1",A:"2.2"}],
     ["E05 承诺兑现率",{D:"2.2 4.2"}],
-    ["E06 计划膨胀率",{D:"4.2",A:"4.1"}],
+    ["E06 排期移出率",{D:"4.2",A:"4.1"}],
     ["E07 分档单位人日",{D:"1.2 1.3 1.4 3.2"}],
     ["P01 人均吞吐当量",{D:"1.1 2.1 2.3 3.1 3.2"}],
     ["P02 人均并发需求",{D:"1.2 1.3 1.4 2.2",A:"4.1"}],
@@ -1946,7 +2117,11 @@ dl.gloss dd{margin:0;font-size:13.5px;color:var(--ink-2)}
     ["A07 无效会话占比",{D:"5.1"}],
     ["Q02 / Q03",{D:"1.2 1.4"}],
     ["G01 缺陷 / 当量",{D:"2.4",A:"2.2"}],
-    ["G02 回滚率",{D:"2.4"}]
+    ["G02 回滚率",{D:"2.4"}],
+    ["F01 需求吞吐率",{D:"2.3 4.2"}],
+    ["F02 需求积压",{D:"4.2"}],
+    ["F03 端到端交付周期",{D:"2.2 4.1",A:"4.2"}],
+    ["F04 小需求响应时长",{D:"2.2 2.3 4.1"}]
   ];
   var body=document.getElementById("mxbody"), html="";
   ROWS.forEach(function(r){
